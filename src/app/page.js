@@ -3,14 +3,28 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { atomicTransaction } from '@/services/transactionService';
-import { Sparkles, ArrowUpRight, ArrowDownRight, Wallet, Activity, Plus, LogOut } from 'lucide-react';
+import { 
+  Plus, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Wallet, 
+  Activity, 
+  Sparkles, 
+  Target, 
+  TrendingUp, 
+  ShieldCheck,
+  Zap,
+  User,
+  History
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState({
-    name: 'Jawaan',
+    name: 'Player',
     balance: 0,
     xp: 0,
     level: 1,
@@ -36,7 +50,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     
-    // 1. Listen to User Profile (Balance, XP)
+    // 1. Listen to User Profile
     const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
       if (doc.exists()) {
         setUserData(prev => ({ ...prev, ...doc.data() }));
@@ -44,12 +58,12 @@ export default function Dashboard() {
       setIsLoading(false);
     });
 
-    // 2. Listen to Recent Transactions
+    // 2. Listen to Recent Transactions (Real-time updates)
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", user.uid),
       orderBy("timestamp", "desc"),
-      limit(5)
+      limit(6)
     );
 
     const unsubTrans = onSnapshot(q, (snapshot) => {
@@ -63,8 +77,6 @@ export default function Dashboard() {
     };
   }, [user]);
 
-  const handleSignOut = () => signOut(auth);
-
   const handleAddMoney = async (amount) => {
     const res = await fetch('/api/payment', {
       method: 'POST',
@@ -77,7 +89,7 @@ export default function Dashboard() {
       amount: order.amount,
       currency: "INR",
       name: "PacPay Arcade",
-      description: "Level Up your Balance",
+      description: "Vault Refill",
       order_id: order.id,
       handler: async function (response) {
         const verifyRes = await fetch('/api/payment', {
@@ -96,7 +108,7 @@ export default function Dashboard() {
             amount: Number(amount),
             category: "Deposit",
             type: "credit",
-            merchant: "Razorpay"
+            merchant: "Razorpay Cloud"
           });
         }
       },
@@ -107,114 +119,269 @@ export default function Dashboard() {
     rzp.open();
   };
 
-  if (!user && isLoading) return <div className="flex items-center justify-center min-h-screen">Loading Arcade...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="w-10 h-10 border-4 border-[var(--color-pac-yellow)] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Syncing Vault...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-700 pb-12">
       
-      {/* Top Banner & Profile Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        <div className="md:col-span-2 w-full flex justify-between items-center bg-[#121212] p-4 md:p-5 rounded-2xl border border-zinc-800 shadow-sm relative group">
-          <div>
-            <h1 className="text-xl font-bold font-heading text-white">
-              Welcome back, {userData.name ? userData.name.split(' ')[0] : 'Jawaan'}
-            </h1>
-            <p className="text-zinc-400 text-xs mt-1 font-medium">Your financial overview</p>
-          </div>
-          <div className="text-right z-10 flex flex-col items-end">
-            <button 
-              onClick={handleSignOut}
-              className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-red-400"
-              title="Sign Out"
-            >
-              <LogOut size={16} />
-            </button>
-            <div className="text-xs font-bold text-[var(--color-pac-yellow)] bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
-              Level {userData.level || 1}
+      {/* 1. Welcomer - Spans 2 cols */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="lg:col-span-2 bg-[#121212] border border-zinc-800 rounded-[2rem] p-8 flex flex-col justify-between relative overflow-hidden group shadow-xl"
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-pac-blue)] rounded-full blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[var(--color-pac-yellow)]">
+              <Zap size={20} fill="currentColor" />
             </div>
-            <div className="w-24 md:w-32 h-1.5 bg-zinc-800 rounded-full mt-2 overflow-hidden">
-              <div className="h-full bg-[var(--color-pac-yellow)] transition-all duration-500" style={{ width: `${((userData.xp || 0) / 500) * 100}%` }}></div>
-            </div>
-            <div className="text-[10px] text-zinc-500 mt-1 font-medium">{userData.xp || 0} / 500 XP</div>
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Player Overview</p>
           </div>
-        </div>
-
-        <div className="w-full bg-[#121212] border border-zinc-800 rounded-2xl p-4 relative overflow-hidden accent-glow flex flex-col justify-center">
-          <div className="flex items-center gap-1.5 mb-2 text-[var(--color-pac-yellow)]">
-            <Sparkles size={16} />
-            <h3 className="font-bold text-xs tracking-wide font-heading">AI Coach</h3>
-          </div>
-          <p className="text-xs text-zinc-400 leading-snug font-main">
-             Coffee spending is up 15%. Reduce it to hit your ₹5,000 monthly target early!
+          <h1 className="text-4xl md:text-5xl font-black font-heading text-white tracking-tighter">
+            Hi, {userData.name.split(' ')[0]}
+          </h1>
+          <p className="text-zinc-400 font-medium text-sm mt-2 max-w-sm italic opacity-80">
+            Current session active. Your arcade performance is up 12% today.
           </p>
         </div>
-      </div>
+        
+        <div className="mt-8 flex items-center gap-4 relative z-10">
+          <button 
+            onClick={() => handleAddMoney(1000)}
+            className="bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black px-6 py-3 rounded-2xl font-black text-xs transition-all shadow-[0_0_15px_rgba(250,204,21,0.3)] hover:scale-105 active:scale-95"
+          >
+            QUICK DEPOSIT ₹1000
+          </button>
+          <div className="flex -space-x-3">
+             <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-400">J</div>
+             <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-400">K</div>
+             <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-400">+4</div>
+          </div>
+        </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        <div className="w-full relative overflow-hidden bg-gradient-to-br from-zinc-900 to-black p-5 md:p-6 rounded-2xl border border-zinc-800 flex flex-col justify-between">
-          <div className="absolute -top-10 -right-10 w-48 h-48 bg-[var(--color-pac-blue)] rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
+      {/* 2. Balance Card - Spans 2 cols on tablet, 1 on Large */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1 }}
+        className="lg:col-span-2 bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-[2rem] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group"
+      >
+        <div className="absolute bottom-0 right-0 w-48 h-48 bg-[var(--color-pac-yellow)] rounded-full blur-[90px] opacity-5"></div>
+        <div className="flex justify-between items-start relative z-10">
           <div>
-            <div className="flex items-center gap-1.5 text-zinc-400 font-medium mb-1 text-xs">
-              <Wallet size={14} /> Total Balance
+            <div className="flex items-center gap-2 text-zinc-400 mb-1">
+              <Wallet size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Vault Balance</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold font-heading text-white tracking-tight">
-              ₹{(userData.balance || 0).toFixed(2)}
+            <h2 className="text-5xl md:text-6xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">
+              ₹{(userData.balance || 0).toLocaleString()}
             </h2>
           </div>
-          <div className="flex gap-3 mt-6">
-            <div className="bg-zinc-800/30 border border-zinc-800/50 rounded-xl p-3 flex-1">
-              <div className="flex justify-between items-center mb-1">
-                <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Spent</p>
-                <ArrowDownRight size={12} className="text-red-400" />
-              </div>
-              <p className="font-bold text-base md:text-lg text-white">₹{(userData.spentThisWeek || 0).toFixed(2)}</p>
-            </div>
-            <div className="bg-zinc-800/30 border border-zinc-800/50 rounded-xl p-3 flex-1">
-              <div className="flex justify-between items-center mb-1">
-                <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Saved</p>
-                <ArrowUpRight size={12} className="text-emerald-400" />
-              </div>
-              <p className="font-bold text-base md:text-lg text-white">₹450.00</p>
-            </div>
+          <div className="p-3 bg-zinc-800/50 rounded-2xl border border-zinc-700 shadow-lg">
+             <TrendingUp size={24} className="text-emerald-400" />
           </div>
         </div>
 
-        <div className="w-full flex justify-between flex-col">
-          <h3 className="font-semibold text-zinc-400 text-xs mb-2 flex items-center justify-between px-1">
-            <span className="flex items-center gap-1.5"><Activity size={14}/> Recent Activity</span>
-            <button 
-               onClick={() => handleAddMoney(500)}
-               className="text-[10px] font-bold text-[var(--color-pac-yellow)] bg-yellow-500/10 px-2 py-1 rounded flex items-center gap-1 hover:bg-yellow-500/20 transition"
-            >
-              <Plus size={10} /> Add ₹500
+        <div className="flex gap-4 mt-8 relative z-10">
+           <div className="flex-1 bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl">
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Weekly Spent</p>
+              <div className="flex items-center gap-2">
+                 <ArrowDownRight size={16} className="text-rose-400" />
+                 <span className="text-xl font-black text-white">₹{(userData.spentThisWeek || 0).toLocaleString()}</span>
+              </div>
+           </div>
+           <div className="flex-1 bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl">
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Safe Savings</p>
+              <div className="flex items-center gap-2">
+                 <ArrowUpRight size={16} className="text-emerald-400" />
+                 <span className="text-xl font-black text-white">₹450</span>
+              </div>
+           </div>
+        </div>
+      </motion.div>
+
+      {/* 3. Level Progress - Spans 1 */}
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.2 }}
+        className="bg-[#121212] border border-zinc-800 rounded-[2rem] p-6 flex flex-col gap-4 shadow-xl"
+      >
+        <div className="flex items-center justify-between">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 border border-orange-500/20">
+            <Target size={20} />
+          </div>
+          <span className="text-[10px] font-black text-orange-400 bg-orange-400/5 px-3 py-1 rounded-full border border-orange-400/10 uppercase tracking-widest">Arcade Rank</span>
+        </div>
+        
+        <div className="mt-2 text-center">
+          <h3 className="text-5xl font-black text-white tracking-tighter">LVL {userData.level || 1}</h3>
+          <p className="text-zinc-500 text-xs font-bold mt-1 uppercase tracking-widest">Master of Vaults</p>
+        </div>
+
+        <div className="mt-4 flex-grow flex flex-col justify-end">
+           <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-2">
+              <span>Next Level</span>
+              <span>{userData.xp || 0} / 500 XP</span>
+           </div>
+           <div className="w-full h-2.5 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800 shadow-inner">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${((userData.xp || 0) / 500) * 100}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full bg-gradient-to-r from-orange-600 to-orange-400 shadow-[0_0_12px_rgba(249,115,22,0.5)]"
+              />
+           </div>
+        </div>
+      </motion.div>
+
+      {/* 4. Ghost Insights (AI) - Spans 1 */}
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-[#121212] border border-zinc-800 rounded-[2rem] p-6 flex flex-col gap-4 shadow-xl relative overflow-hidden group"
+      >
+        <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500 rounded-full blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+            <Sparkles size={20} />
+          </div>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Ghost Insights</p>
+        </div>
+
+        <div className="mt-2 flex-grow">
+           <p className="text-sm font-medium text-zinc-300 leading-relaxed italic border-l-2 border-emerald-500/40 pl-4 py-2 bg-emerald-500/5 rounded-r-xl">
+             "You've saved ₹450 compared to last week. At this rate, you'll reach Level 5 by Tuesday!"
+           </p>
+        </div>
+
+        <div className="mt-4 flex items-center gap-2 bg-zinc-900/50 p-3 rounded-2xl border border-zinc-800">
+           <ShieldCheck size={16} className="text-emerald-400" />
+           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Security Optimal</span>
+        </div>
+      </motion.div>
+
+      {/* 5. Recent Activity - Spans 2 */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="md:col-span-2 bg-[#121212] border border-zinc-800 rounded-[2rem] p-8 shadow-xl flex flex-col min-h-[300px]"
+      >
+         <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-[var(--color-pac-blue)]/10 flex items-center justify-center text-[var(--color-pac-blue)] border border-[var(--color-pac-blue)]/20">
+                  <Activity size={20} />
+               </div>
+               <h3 className="text-xl font-black text-white tracking-tighter">Session Logs</h3>
+            </div>
+            <button className="text-[10px] font-black text-[var(--color-pac-blue)] uppercase tracking-widest hover:underline flex items-center gap-1">
+               <History size={14} /> Full History
             </button>
-          </h3>
-          <div className="flex flex-col gap-2">
+         </div>
+
+         <div className="flex flex-col gap-3 h-full overflow-y-auto pr-2 custom-scrollbar">
             {transactions.length === 0 ? (
-              <div className="p-4 text-center border border-dashed border-zinc-800 rounded-xl">
-                <p className="text-[10px] text-zinc-500 font-medium">No activity yet. Level up by adding money!</p>
+              <div className="flex-grow flex flex-col items-center justify-center opacity-30 gap-3 grayscale">
+                 <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center">?</div>
+                 <p className="text-xs font-bold uppercase tracking-widest">No Logs Found</p>
               </div>
             ) : (
-              transactions.map(tx => (
-                <div key={tx.id} className="flex justify-between items-center p-3 bg-[#121212] border border-zinc-800 hover:border-zinc-700 transition-all rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800/50 flex items-center justify-center text-lg">
-                      {tx.type === 'credit' ? '💰' : '💳'}
+              transactions.map((tx, idx) => (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + (idx * 0.05) }}
+                  key={tx.id} 
+                  className="flex justify-between items-center p-4 bg-zinc-900/30 border border-zinc-800/50 hover:border-zinc-700 hover:bg-zinc-900/80 transition-all rounded-[1.5rem] group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 ${tx.type === 'credit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-rose-400'}`}>
+                      {tx.type === 'credit' ? '💎' : '👻'}
                     </div>
                     <div>
-                      <p className="font-medium text-sm text-white">{tx.merchant || tx.category}</p>
-                      <p className="text-[10px] text-zinc-500 mt-0.5 capitalize">{tx.category}</p>
+                      <p className="font-bold text-sm text-white">{tx.merchant || tx.category}</p>
+                      <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mt-0.5">{tx.category}</p>
                     </div>
                   </div>
-                  <div className={`font-semibold text-sm ${tx.type === 'credit' ? 'text-emerald-400' : 'text-zinc-200'}`}>
-                    {tx.type === 'credit' ? '+' : '-'}₹{Math.abs(tx.amount)}
+                  <div className="text-right">
+                    <p className={`font-black text-lg ${tx.type === 'credit' ? 'text-emerald-400' : 'text-zinc-200'}`}>
+                      {tx.type === 'credit' ? '+' : '-'}₹{Math.abs(tx.amount).toLocaleString()}
+                    </p>
+                    <p className="text-[10px] font-medium text-zinc-600 uppercase mt-0.5">
+                       {tx.timestamp?.toDate ? new Date(tx.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                    </p>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
-          </div>
-        </div>
-      </div>
+         </div>
+      </motion.div>
+
+      {/* 6. Quick Actions Grid - Spans 2 */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="md:col-span-2 grid grid-cols-2 gap-4"
+      >
+         <ActionTile 
+            icon={<User size={24}/>} 
+            title="Invite Squad" 
+            desc="Earn ₹100 bonus" 
+            color="border-indigo-500/20 text-indigo-400"
+            onClick={() => router.push('/profile')}
+         />
+         <ActionTile 
+            icon={<TrendingUp size={24}/>} 
+            title="Arcade Stats" 
+            desc="View XP History" 
+            color="border-emerald-500/20 text-emerald-400" 
+         />
+         <div className="col-span-2 relative group overflow-hidden bg-gradient-to-r from-[var(--color-pac-yellow)] to-orange-400 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-all"
+              onClick={() => handleAddMoney(500)}>
+            <div className="absolute right-[-10px] top-[-10px] opacity-10 rotate-12 scale-150">
+               <Wallet size={120} fill="black" />
+            </div>
+            <div className="relative z-10 flex items-center justify-between">
+               <div>
+                  <h4 className="text-xl font-black text-black tracking-tighter uppercase">Instant Vault Refill</h4>
+                  <p className="text-black/60 text-xs font-bold uppercase tracking-widest">Get ₹500 credits now</p>
+               </div>
+               <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-[var(--color-pac-yellow)] shadow-lg">
+                  <Plus size={24} strokeWidth={3} />
+               </div>
+            </div>
+         </div>
+      </motion.div>
+
     </div>
   );
+}
+
+function ActionTile({ icon, title, desc, color, onClick }) {
+   return (
+      <div 
+        onClick={onClick}
+        className={`bg-[#121212] border ${color} rounded-[2rem] p-6 flex flex-col justify-between hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer group shadow-lg`}
+      >
+         <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 group-hover:bg-zinc-800 transition-colors">
+            {icon}
+         </div>
+         <div>
+            <h4 className="font-black text-white text-lg tracking-tighter leading-none">{title}</h4>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{desc}</p>
+         </div>
+      </div>
+   );
 }

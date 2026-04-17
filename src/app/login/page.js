@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/firebase/config';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { generateReferralCode } from '@/services/transactionService';
+import { db } from '@/firebase/config';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,6 +26,49 @@ export default function LoginPage() {
       router.push('/');
     } catch (err) {
       setError("Invalid email or password. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Check if user already has a vault
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        // Initialize basic vault for first-time Google sign-in
+        await setDoc(docRef, {
+          name: user.displayName || "Arcade Player",
+          email: user.email,
+          phone: user.phoneNumber || "",
+          dob: "",
+          pan: "GOOGLE_AUTH",
+          aadhar: "GOOGLE_AUTH",
+          address: "",
+          state: "",
+          zip: "",
+          employment: "Salaried",
+          income: "",
+          balance: 0,
+          xp: 0,
+          level: 1,
+          referralCode: generateReferralCode(user.displayName),
+          createdAt: serverTimestamp()
+        });
+      }
+
+      router.push('/');
+    } catch (err) {
+      setError("Google sign-in failed. Please try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -89,8 +136,29 @@ export default function LoginPage() {
             <a href="#" className="text-[11px] font-medium text-zinc-500 hover:text-[var(--color-pac-blue)] transition">Forgot password?</a>
           </div>
 
-          <button type="submit" className="w-full bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all flex justify-center items-center gap-2">
-            Sign In <ArrowRight size={16} />
+          <button type="submit" disabled={isLoading} className={`w-full bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all flex justify-center items-center gap-2 ${isLoading && 'opacity-70 cursor-wait'}`}>
+            {isLoading ? 'Signing In...' : <><>Sign In</> <ArrowRight size={16} /></>}
+          </button>
+
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-zinc-800"></div>
+            <span className="flex-shrink-0 mx-4 text-zinc-500 text-xs font-medium">OR</span>
+            <div className="flex-grow border-t border-zinc-800"></div>
+          </div>
+
+          <button 
+            type="button" 
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className={`w-full bg-white hover:bg-gray-100 text-black py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all flex justify-center items-center gap-2 ${isLoading && 'opacity-70 cursor-wait'}`}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25C22.56 11.47 22.49 10.72 22.36 10H12V14.26H17.92C17.67 15.63 16.86 16.79 15.69 17.57V20.34H19.26C21.36 18.42 22.56 15.6 22.56 12.25Z" fill="#4285F4"/>
+              <path d="M12 23C14.97 23 17.46 22.02 19.26 20.34L15.69 17.57C14.71 18.23 13.46 18.63 12 18.63C9.21 18.63 6.84 16.75 5.96 14.19H2.27V17.05C4.06 20.61 7.74 23 12 23Z" fill="#34A853"/>
+              <path d="M5.96 14.19C5.74 13.52 5.61 12.78 5.61 12C5.61 11.22 5.74 10.48 5.96 9.81V6.95H2.27C1.51 8.46 1.08 10.18 1.08 12C1.08 13.82 1.51 15.54 2.27 17.05L5.96 14.19Z" fill="#FBBC05"/>
+              <path d="M12 5.38C13.62 5.38 15.07 5.93 16.21 7.02L19.34 3.89C17.45 2.12 14.97 1 12 1C7.74 1 4.06 3.39 2.27 6.95L5.96 9.81C6.84 7.25 9.21 5.38 12 5.38Z" fill="#EA4335"/>
+            </svg>
+            Sign In with Google
           </button>
 
         </form>

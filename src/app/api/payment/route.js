@@ -2,12 +2,16 @@ import Razorpay from 'razorpay';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-});
-
+// Initialize Razorpay lazily inside the handler to prevent build-time crashes
 export async function POST(req) {
+  const RAZORPAY_KEY = process.env.RAZORPAY_KEY_ID || '';
+  const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
+
+  const razorpay = new Razorpay({
+    key_id: RAZORPAY_KEY,
+    key_secret: RAZORPAY_SECRET,
+  });
+
   try {
     const { action, amount, orderId, paymentId, signature } = await req.json();
 
