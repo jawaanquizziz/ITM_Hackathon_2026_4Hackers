@@ -47,10 +47,10 @@ export default function ClientWrapper({ children }) {
       </AnimatePresence>
 
       {!showSplash && (
-        <div className="animate-in fade-in duration-700">
+        <div className="animate-in fade-in duration-700 min-h-screen flex flex-col">
           <TopNavbar />
           
-          <main className="flex-1 pb-24 md:pb-10 pt-6 md:pt-24 px-4 w-full max-w-lg md:max-w-4xl mx-auto flex flex-col relative z-10">
+          <main className="flex-1 pb-24 md:pb-12 pt-6 md:pt-28 px-4 w-full max-w-lg md:max-w-6xl mx-auto flex flex-col relative z-10 transition-all duration-500">
             {children}
           </main>
 

@@ -295,7 +295,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="md:col-span-2 bg-[#121212] border border-zinc-800 rounded-[2rem] p-8 shadow-xl flex flex-col min-h-[300px]"
+        className="md:col-span-2 bg-[#121212] border border-zinc-800 rounded-[2rem] p-8 shadow-xl flex flex-col min-h-[400px] h-full"
       >
          <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
@@ -309,9 +309,9 @@ export default function Dashboard() {
             </button>
          </div>
 
-         <div className="flex flex-col gap-3 h-full overflow-y-auto pr-2 custom-scrollbar">
+         <div className="flex flex-col gap-3 h-full overflow-y-auto pr-2 custom-scrollbar max-h-[250px]">
             {transactions.length === 0 ? (
-              <div className="flex-grow flex flex-col items-center justify-center opacity-30 gap-3 grayscale">
+              <div className="flex-grow flex flex-col items-center justify-center opacity-30 gap-3 grayscale py-12">
                  <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center">?</div>
                  <p className="text-xs font-bold uppercase tracking-widest">No Logs Found</p>
               </div>
@@ -352,7 +352,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="md:col-span-2 grid grid-cols-2 gap-4"
+        className="md:col-span-2 grid grid-cols-2 gap-4 h-full"
       >
          <ActionTile 
             icon={<User size={24}/>} 
@@ -367,7 +367,7 @@ export default function Dashboard() {
             desc="View XP History" 
             color="border-emerald-500/20 text-emerald-400" 
          />
-         <div className="col-span-2 relative group overflow-hidden bg-gradient-to-r from-[var(--color-pac-yellow)] to-orange-400 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-all"
+         <div className="col-span-2 flex flex-col justify-center relative group overflow-hidden bg-gradient-to-r from-[var(--color-pac-yellow)] to-orange-400 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-all"
               onClick={() => handleAddMoney(500)}>
             <div className="absolute right-[-10px] top-[-10px] opacity-10 rotate-12 scale-150">
                <Wallet size={120} fill="black" />
