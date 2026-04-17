@@ -13,12 +13,19 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) {
+      setUser({ uid: 'demo_user', displayName: 'Jawaan' });
+      setIsLoading(false);
+      return;
+    }
+
     const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
       } else {
         router.push('/login');
       }
+      setIsLoading(false);
     });
     return () => unsubAuth();
   }, [router]);
@@ -26,6 +33,27 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     
+    if (!db) {
+      setProfileData({
+        name: 'Jawaan',
+        level: 5,
+        balance: 1450.50,
+        xp: 1250,
+        referralCode: 'PAC-DEMO',
+        email: 'jawaan@example.com',
+        phone: '+91 9876543210',
+        employment: 'Professional Gamer',
+        dob: '01/01/2000',
+        address: '123 Arcade Street',
+        state: 'Maharashtra',
+        pan: 'ABCDE1234F',
+        aadhar: 'XXXX-XXXX-1234',
+        income: '50,000'
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const unsubProfile = onSnapshot(doc(db, "users", user.uid), (doc) => {
       if (doc.exists()) {
         setProfileData(doc.data());

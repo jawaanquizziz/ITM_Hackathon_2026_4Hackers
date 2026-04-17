@@ -23,12 +23,19 @@ export default function SettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) {
+      setUser({ uid: 'demo_user' });
+      setIsLoading(false);
+      return;
+    }
+
     const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
       } else {
         router.push('/login');
       }
+      setIsLoading(false);
     });
     return () => unsubAuth();
   }, [router]);
@@ -37,6 +44,20 @@ export default function SettingsPage() {
     if (!user) return;
     
     const fetchProfile = async () => {
+      if (!db) {
+        setFormData({
+          name: 'Jawaan',
+          phone: '+91 9876543210',
+          address: '123 Arcade Street',
+          state: 'Maharashtra',
+          zip: '400001',
+          employment: 'Professional Gamer',
+          bio: 'Financial Gamer'
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
