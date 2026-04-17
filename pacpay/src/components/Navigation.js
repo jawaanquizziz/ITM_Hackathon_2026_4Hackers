@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LineChart, Target, Gift, User, Bell } from 'lucide-react';
+import { Home, LineChart, Target, Gift, User, Bell, Store } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -29,6 +29,7 @@ export function TopNavbar() {
           <div className="flex space-x-10">
             <NavItem href="/" icon={Home} label="Dashboard" active={pathname === '/'} desktop />
             <NavItem href="/insights" icon={LineChart} label="Insights" active={pathname === '/insights'} desktop />
+            <NavItem href="/store" icon={Store} label="Store" active={pathname === '/store'} desktop />
             <NavItem href="/missions" icon={Target} label="Quests" active={pathname === '/missions'} desktop />
             <NavItem href="/rewards" icon={Gift} label="Rewards" active={pathname === '/rewards'} desktop />
           </div>
@@ -63,7 +64,7 @@ export function BottomNavigation() {
         <NavItem href="/" icon={Home} label="Home" active={pathname === '/'} />
         <NavItem href="/insights" icon={LineChart} label="Insights" active={pathname === '/insights'} />
         
-        <div className="w-16"></div>
+        <NavItem href="/store" icon={Store} label="Store" active={pathname === '/store'} />
 
         <NavItem href="/rewards" icon={Gift} label="Rewards" active={pathname === '/rewards'} />
         <NavItem href="/missions" icon={Target} label="Quests" active={pathname === '/missions'} />
