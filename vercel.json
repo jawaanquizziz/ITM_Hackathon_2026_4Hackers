@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build --prefix pacpay",
+  "installCommand": "npm install && npm run install-all",
+  "devCommand": "npm run dev",
+  "framework": "nextjs",
+  "outputDirectory": "pacpay/.next"
+}
