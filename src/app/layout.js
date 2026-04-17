@@ -25,6 +25,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
       </head>
       <body className={`${inter.className} ${outfit.variable} min-h-screen flex flex-col bg-[var(--color-pac-bg)]`}>
         <ClientWrapper>
