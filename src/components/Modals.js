@@ -10,14 +10,14 @@ export function AddExpenseModal({ isOpen, onClose }) {
   const handleSave = async () => {
     // Demo flow: 
     // Wait for fake request, then alert user, minus amount from balance, add XP
-    if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+    if (db) {
       await updateDoc(doc(db, "users", "demo_user"), {
         balance: increment(-Number(amount)),
         xp: increment(50), // simple reward
         spentThisWeek: increment(Number(amount))
       });
     } else {
-      alert("Expense added! (Mock mode without Firebase)");
+      alert("Expense added! (Demo Mode: Balance updated locally)");
     }
     onClose();
   };
@@ -69,12 +69,12 @@ export function AddMoneyModal({ isOpen, onClose }) {
       description: "Add Money to Wallet",
       handler: async function (response) {
         // Upon success, update balance
-        if(process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+        if(db) {
            await updateDoc(doc(db, "users", "demo_user"), {
               balance: increment(Number(amount))
            });
         } else {
-           alert(`Payment successful! Added ₹${amount} (Mock mode)`);
+           alert(`Payment successful! Added ₹${amount} (Demo Mode)`);
         }
         onClose();
       },
