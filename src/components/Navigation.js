@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LineChart, Target, Gift, User, Bell, Settings } from 'lucide-react';
+import { Home, LineChart, Target, Gift, User, Bell, Settings, Store } from 'lucide-react';
 import { auth, db } from '@/firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -49,6 +49,7 @@ export function TopNavbar() {
           <div className="flex space-x-10">
             <NavItem href="/" icon={Home} label="Dashboard" active={pathname === '/'} desktop />
             <NavItem href="/insights" icon={LineChart} label="Insights" active={pathname === '/insights'} desktop />
+            <NavItem href="/store" icon={Store} label="Store" active={pathname === '/store'} desktop />
             <NavItem href="/missions" icon={Target} label="Quests" active={pathname === '/missions'} desktop />
             <NavItem href="/rewards" icon={Gift} label="Rewards" active={pathname === '/rewards'} desktop />
           </div>
@@ -95,10 +96,40 @@ export function BottomNavigation() {
 
         <div className="w-16"></div>
 
+        <NavItem href="/store" icon={Store} label="Store" active={pathname === '/store'} />
         <NavItem href="/missions" icon={Target} label="Missions" active={pathname === '/missions'} />
-        <NavItem href="/settings" icon={Settings} label="Settings" active={pathname === '/settings'} />
       </div>
     </div>
+  );
+}
+
+function NavItem({ href, icon: Icon, label, active, desktop = false }) {
+  return (
+    <Link 
+      href={href}
+      className={twMerge(
+        "flex flex-col items-center justify-center gap-1 transition-all relative group",
+        desktop ? "flex-row gap-2 py-2" : "w-14 h-12 mt-1",
+        active ? "text-[var(--color-pac-yellow)]" : "text-zinc-500 hover:text-white"
+      )}
+    >
+      <Icon 
+        size={desktop ? 18 : 22} 
+        strokeWidth={active ? 2.5 : 2} 
+      />
+      <span className={clsx(
+         "text-[10px] font-medium tracking-wide", 
+         desktop ? "text-sm font-medium" : ""
+      )}>
+        {label}
+      </span>
+      {desktop && active && (
+        <span className="absolute -bottom-[29px] left-0 right-0 h-0.5 bg-[var(--color-pac-yellow)] rounded-t-full shadow-[0_-2px_10px_rgba(250,204,21,0.3)]"></span>
+      )}
+      {desktop && !active && (
+        <span className="absolute -bottom-[29px] left-0 right-0 h-0.5 bg-white opacity-0 group-hover:opacity-20 rounded-t-full transition-opacity"></span>
+      )}
+    </Link>
   );
 }
 

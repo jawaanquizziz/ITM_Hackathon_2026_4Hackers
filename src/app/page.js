@@ -36,19 +36,38 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) {
+      console.warn("Firebase Auth not configured. Entering Demo Mode.");
+      setUser({ uid: 'demo_user', displayName: 'Jawaan' });
+      setIsLoading(false);
+      return;
+    }
+
     const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
       } else {
         router.push('/login');
       }
+      setIsLoading(false);
     });
 
     return () => unsubAuth();
   }, [router]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) {
+      if (!db && user) {
+        // Provide some default demo data if DB is missing
+        setTransactions([
+          { id: '1', amount: 500, category: 'Food', type: 'debit', merchant: 'Pac-Cafe', timestamp: new Date() },
+          { id: '2', amount: 1200, category: 'Gaming', type: 'debit', merchant: 'Arcade Zone', timestamp: new Date() }
+        ]);
+        setUserData(prev => ({ ...prev, balance: 1450.50, spentThisWeek: 230 }));
+        setIsLoading(false);
+      }
+      return;
+    }
     
     // 1. Listen to User Profile
     const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
