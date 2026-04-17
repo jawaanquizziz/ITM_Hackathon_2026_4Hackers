@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pac-yellow: #facc15;
+  --color-pac-blue: #0ea5e9;
+  --color-pac-bg: #050505; /* Deep rich black */
+  --color-pac-surface: #121212;
+  --color-pac-border: #27272a; /* Neutral zinc border */
+}
+
+@layer base {
+  :root {
+    --background: var(--color-pac-bg);
+    --foreground: #ffffff;
+  }
+  
+  html, body {
+    @apply antialiased bg-[var(--background)] text-[var(--foreground)] h-full w-full overflow-x-hidden;
+    /* Soft premium dark gradient */
+    background: radial-gradient(circle at top right, #111827, #050505);
+  }
+}
+
+/* Glassmorphism Classes (Professional) */
+.glass-nav {
+  @apply bg-[#050505]/80 backdrop-blur-xl border-[var(--color-pac-border)];
+}
+
+.fab-button {
+  background: linear-gradient(135deg, var(--color-pac-yellow) 0%, #d97706 100%);
+  box-shadow: 0 10px 25px -5px rgba(250, 204, 21, 0.4);
+}
+
+/* More professional card borders */
+.arcade-border {
+  @apply rounded-3xl bg-[#121212]/90 backdrop-blur-lg border border-[var(--color-pac-border)] shadow-sm;
+}
+
+.pac-dot {
+  @apply w-1.5 h-1.5 bg-zinc-600 rounded-full mx-1.5;
+}
+
+/* Subtle ghost accents rather than neon */
+.ghost-red { color: #f87171; }
+.ghost-pink { color: #f472b6; }
+.ghost-cyan { color: #22d3ee; }
+.ghost-orange { color: #fb923c; }
+
+/* Subtle accent glow */
+.accent-glow {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
