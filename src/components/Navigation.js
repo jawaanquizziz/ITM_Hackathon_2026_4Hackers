@@ -14,12 +14,21 @@ export function TopNavbar() {
   const [userData, setUserData] = useState(null);
   
   useEffect(() => {
+    if (!auth) {
+      setUserData({ name: 'Jawaan' });
+      return;
+    }
+
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setUserData(docSnap.data());
+        if (db) {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setUserData(docSnap.data());
+          }
+        } else {
+          setUserData({ name: user.displayName || 'Player' });
         }
       }
     });
