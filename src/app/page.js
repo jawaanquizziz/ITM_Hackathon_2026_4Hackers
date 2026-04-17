@@ -1,28 +1,96 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/firebase/config';
-import { Sparkles, ArrowUpRight, ArrowDownRight, Wallet, Activity } from 'lucide-react';
+import { atomicTransaction } from '@/services/transactionService';
+import { Sparkles, ArrowUpRight, ArrowDownRight, Wallet, Activity, Plus } from 'lucide-react';
 
 export default function Dashboard() {
   const [userData, setUserData] = useState({
-    balance: 1450.50,
-    xp: 450,
-    level: 3,
-    spentThisWeek: 230.00
+    balance: 0,
+    xp: 0,
+    level: 1,
+    spentThisWeek: 0
   });
 
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const userId = "demo_user";
-    if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
+    const userId = "demo_user"; // In production, get this from Firebase Auth
+    if (!db) return;
     
-    const unsub = onSnapshot(doc(db, "users", userId), (doc) => {
+    // 1. Listen to User Profile (Balance, XP)
+    const unsubUser = onSnapshot(doc(db, "users", userId), (doc) => {
       if (doc.exists()) {
         setUserData(prev => ({ ...prev, ...doc.data() }));
       }
+      setIsLoading(false);
     });
-    return () => unsub();
+
+    // 2. Listen to Recent Transactions
+    const q = query(
+      collection(db, "transactions"),
+      where("userId", "==", userId),
+      orderBy("timestamp", "desc"),
+      limit(5)
+    );
+
+    const unsubTrans = onSnapshot(q, (snapshot) => {
+      const transData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTransactions(transData);
+    });
+
+    return () => {
+      unsubUser();
+      unsubTrans();
+    };
   }, []);
+
+  // Razorpay Handle: Add Money
+  const handleAddMoney = async (amount) => {
+    const res = await fetch('/api/payment', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'create_order', amount })
+    });
+    const order = await res.json();
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: "INR",
+      name: "PacPay Arcade",
+      description: "Level Up your Balance",
+      order_id: order.id,
+      handler: async function (response) {
+        // Verify payment on server
+        const verifyRes = await fetch('/api/payment', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            action: 'verify_payment',
+            orderId: order.id,
+            paymentId: response.razorpay_payment_id,
+            signature: response.razorpay_signature
+          })
+        });
+        const verifyData = await verifyRes.json();
+        
+        if (verifyData.success) {
+          // Add to Firebase atomically
+          await atomicTransaction("demo_user", {
+            amount,
+            category: "Deposit",
+            type: "credit",
+            merchant: "Razorpay"
+          });
+        }
+      },
+      theme: { color: "#FACC15" }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
@@ -94,32 +162,39 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Transactions Mini-List */}
         <div className="w-full flex justify-between flex-col">
           <h3 className="font-semibold text-zinc-400 text-xs mb-2 flex items-center justify-between px-1">
             <span className="flex items-center gap-1.5"><Activity size={14}/> Recent Activity</span>
-            <span className="text-[10px] font-medium text-[var(--color-pac-blue)] cursor-pointer hover:underline">View All</span>
+            <button 
+               onClick={() => handleAddMoney(500)}
+               className="text-[10px] font-bold text-[var(--color-pac-yellow)] bg-yellow-500/10 px-2 py-1 rounded flex items-center gap-1 hover:bg-yellow-500/20 transition"
+            >
+              <Plus size={10} /> Add ₹500
+            </button>
           </h3>
           <div className="flex flex-col gap-2">
-            {[
-              { id: 1, name: 'Starbucks', category: 'Food & Drink', amt: -450, icon: '☕' },
-              { id: 2, name: 'Salary', category: 'Income', amt: +15000, icon: '💰' },
-              { id: 3, name: 'Spotify', category: 'Subscription', amt: -119, icon: '🎵' },
-              { id: 4, name: 'Uber Express', category: 'Transport', amt: -250, icon: '🚗' }
-            ].map(tx => (
-              <div key={tx.id} className="flex justify-between items-center p-3 bg-[#121212] border border-zinc-800 hover:border-zinc-700 transition-all rounded-xl">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full bg-zinc-800/50 flex items-center justify-center text-lg`}>{tx.icon}</div>
-                  <div>
-                    <p className="font-medium text-sm text-white">{tx.name}</p>
-                    <p className="text-[10px] text-zinc-500 mt-0.5">{tx.category}</p>
+            {transactions.length === 0 ? (
+              <div className="p-4 text-center border border-dashed border-zinc-800 rounded-xl">
+                <p className="text-[10px] text-zinc-500 font-medium">No activity yet. Level up by adding money!</p>
+              </div>
+            ) : (
+              transactions.map(tx => (
+                <div key={tx.id} className="flex justify-between items-center p-3 bg-[#121212] border border-zinc-800 hover:border-zinc-700 transition-all rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-zinc-800/50 flex items-center justify-center text-lg">
+                      {tx.type === 'credit' ? '💰' : '💳'}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-white">{tx.merchant || tx.category}</p>
+                      <p className="text-[10px] text-zinc-500 mt-0.5 capitalize">{tx.category}</p>
+                    </div>
+                  </div>
+                  <div className={`font-semibold text-sm ${tx.type === 'credit' ? 'text-emerald-400' : 'text-zinc-200'}`}>
+                    {tx.type === 'credit' ? '+' : '-'}₹{Math.abs(tx.amount)}
                   </div>
                 </div>
-                <div className={`font-semibold text-sm ${tx.amt > 0 ? 'text-emerald-400' : 'text-zinc-200'}`}>
-                  {tx.amt > 0 ? '+' : ''}₹{Math.abs(tx.amt)}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
         

@@ -1,23 +1,15 @@
 # dependencies
 node_modules
-.pnp
+/.pnp
 .pnp.js
+.yarn
 
 # next.js
 /.next/
 /out/
-.next
-build
 
 # production
 /build
-
-# PWA
-public/sw.js
-public/workbox-*.js
-public/fallback-*.js
-public/sw.js.map
-public/workbox-*.js.map
 
 # misc
 .DS_Store
@@ -27,6 +19,7 @@ public/workbox-*.js.map
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # local env files
 .env*.local
@@ -34,3 +27,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
