@@ -6,6 +6,7 @@ import { ShieldCheck, User, MapPin, Briefcase } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', dob: '', phone: '',
     panData: '', ssn: '', address: '', state: '', zip: '',
@@ -16,8 +17,27 @@ export default function RegisterPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validate = () => {
+    if (formData.name.length < 3) return "Full Name is too short.";
+    if (formData.password.length < 8) return "Password must be at least 8 characters.";
+    if (!/^\d{10}$/.test(formData.phone)) return "Phone number must be exactly 10 digits.";
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panData.toUpperCase())) return "Invalid PAN Number format (e.g., ABCDE1234F).";
+    if (!/^\d{12}$/.test(formData.ssn)) return "Aadhar number must be 12 digits.";
+    if (!/^\d{6}$/.test(formData.zip)) return "Postal code must be 6 digits.";
+    return null;
+  };
+
   const handleRegister = (e) => {
     e.preventDefault();
+    setError('');
+    
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     router.push('/');
   };
 
@@ -39,6 +59,12 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleRegister} className="w-full space-y-4 z-10 relative">
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-100 text-[11px] font-bold p-3 rounded-2xl animate-in fade-in slide-in-from-top-1 duration-200">
+               ⚠️ Error: {error}
+            </div>
+          )}
           
           {/* Section 1: Basic Credentials */}
           <div className="bg-zinc-900/30 p-4 md:p-5 rounded-2xl border border-zinc-800/50">

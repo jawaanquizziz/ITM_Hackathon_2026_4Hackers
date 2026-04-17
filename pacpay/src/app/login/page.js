@@ -7,10 +7,18 @@ import { Lock, Mail, ArrowRight } from 'lucide-react';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleLogin = (e) => {
     e.preventDefault();
+    setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
     router.push('/');
   };
 
@@ -36,6 +44,12 @@ export default function LoginPage() {
         </p>
 
         <form onSubmit={handleLogin} className="w-full space-y-3 z-10">
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold p-2.5 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200">
+              {error}
+            </div>
+          )}
           
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
