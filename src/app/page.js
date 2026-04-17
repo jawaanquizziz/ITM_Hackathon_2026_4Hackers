@@ -1,12 +1,16 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { doc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/firebase/config';
+import { auth, db } from '@/firebase/config';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { atomicTransaction } from '@/services/transactionService';
-import { Sparkles, ArrowUpRight, ArrowDownRight, Wallet, Activity, Plus } from 'lucide-react';
+import { Sparkles, ArrowUpRight, ArrowDownRight, Wallet, Activity, Plus, LogOut } from 'lucide-react';
 
 export default function Dashboard() {
+  const [user, setUser] = useState(null);
   const [userData, setUserData] = useState({
+    name: 'Jawaan',
     balance: 0,
     xp: 0,
     level: 1,
@@ -15,13 +19,25 @@ export default function Dashboard() {
 
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const userId = "demo_user"; // In production, get this from Firebase Auth
-    if (!db) return;
+    const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        router.push('/login');
+      }
+    });
+
+    return () => unsubAuth();
+  }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
     
     // 1. Listen to User Profile (Balance, XP)
-    const unsubUser = onSnapshot(doc(db, "users", userId), (doc) => {
+    const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
       if (doc.exists()) {
         setUserData(prev => ({ ...prev, ...doc.data() }));
       }
@@ -31,7 +47,7 @@ export default function Dashboard() {
     // 2. Listen to Recent Transactions
     const q = query(
       collection(db, "transactions"),
-      where("userId", "==", userId),
+      where("userId", "==", user.uid),
       orderBy("timestamp", "desc"),
       limit(5)
     );
@@ -45,9 +61,10 @@ export default function Dashboard() {
       unsubUser();
       unsubTrans();
     };
-  }, []);
+  }, [user]);
 
-  // Razorpay Handle: Add Money
+  const handleSignOut = () => signOut(auth);
+
   const handleAddMoney = async (amount) => {
     const res = await fetch('/api/payment', {
       method: 'POST',
@@ -63,7 +80,6 @@ export default function Dashboard() {
       description: "Level Up your Balance",
       order_id: order.id,
       handler: async function (response) {
-        // Verify payment on server
         const verifyRes = await fetch('/api/payment', {
           method: 'POST',
           body: JSON.stringify({ 
@@ -76,9 +92,8 @@ export default function Dashboard() {
         const verifyData = await verifyRes.json();
         
         if (verifyData.success) {
-          // Add to Firebase atomically
-          await atomicTransaction("demo_user", {
-            amount,
+          await atomicTransaction(user.uid, {
+            amount: Number(amount),
             category: "Deposit",
             type: "credit",
             merchant: "Razorpay"
@@ -92,31 +107,38 @@ export default function Dashboard() {
     rzp.open();
   };
 
+  if (!user && isLoading) return <div className="flex items-center justify-center min-h-screen">Loading Arcade...</div>;
+
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
       
       {/* Top Banner & Profile Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-        {/* Profile Card */}
-        <div className="md:col-span-2 w-full flex justify-between items-center bg-[#121212] p-4 md:p-5 rounded-2xl border border-zinc-800 shadow-sm">
+        <div className="md:col-span-2 w-full flex justify-between items-center bg-[#121212] p-4 md:p-5 rounded-2xl border border-zinc-800 shadow-sm relative group">
           <div>
             <h1 className="text-xl font-bold font-heading text-white">
-              Welcome back, Jawaan
+              Welcome back, {userData.name ? userData.name.split(' ')[0] : 'Jawaan'}
             </h1>
             <p className="text-zinc-400 text-xs mt-1 font-medium">Your financial overview</p>
           </div>
           <div className="text-right z-10 flex flex-col items-end">
+            <button 
+              onClick={handleSignOut}
+              className="absolute top-2 right-2 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-red-400"
+              title="Sign Out"
+            >
+              <LogOut size={16} />
+            </button>
             <div className="text-xs font-bold text-[var(--color-pac-yellow)] bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">
-              Level {userData.level}
+              Level {userData.level || 1}
             </div>
             <div className="w-24 md:w-32 h-1.5 bg-zinc-800 rounded-full mt-2 overflow-hidden">
-              <div className="h-full bg-[var(--color-pac-yellow)] transition-all duration-500" style={{ width: `${(userData.xp / 500) * 100}%` }}></div>
+              <div className="h-full bg-[var(--color-pac-yellow)] transition-all duration-500" style={{ width: `${((userData.xp || 0) / 500) * 100}%` }}></div>
             </div>
-            <div className="text-[10px] text-zinc-500 mt-1 font-medium">{userData.xp} / 500 XP</div>
+            <div className="text-[10px] text-zinc-500 mt-1 font-medium">{userData.xp || 0} / 500 XP</div>
           </div>
         </div>
 
-        {/* AI AI Insights Widget */}
         <div className="w-full bg-[#121212] border border-zinc-800 rounded-2xl p-4 relative overflow-hidden accent-glow flex flex-col justify-center">
           <div className="flex items-center gap-1.5 mb-2 text-[var(--color-pac-yellow)]">
             <Sparkles size={16} />
@@ -128,29 +150,24 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        
-        {/* Balance Card */}
         <div className="w-full relative overflow-hidden bg-gradient-to-br from-zinc-900 to-black p-5 md:p-6 rounded-2xl border border-zinc-800 flex flex-col justify-between">
           <div className="absolute -top-10 -right-10 w-48 h-48 bg-[var(--color-pac-blue)] rounded-full blur-[80px] opacity-10 pointer-events-none"></div>
-          
           <div>
             <div className="flex items-center gap-1.5 text-zinc-400 font-medium mb-1 text-xs">
               <Wallet size={14} /> Total Balance
             </div>
             <h2 className="text-3xl md:text-4xl font-bold font-heading text-white tracking-tight">
-              ₹{userData.balance.toFixed(2)}
+              ₹{(userData.balance || 0).toFixed(2)}
             </h2>
           </div>
-          
           <div className="flex gap-3 mt-6">
             <div className="bg-zinc-800/30 border border-zinc-800/50 rounded-xl p-3 flex-1">
               <div className="flex justify-between items-center mb-1">
                 <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">Spent</p>
                 <ArrowDownRight size={12} className="text-red-400" />
               </div>
-              <p className="font-bold text-base md:text-lg text-white">₹{userData.spentThisWeek.toFixed(2)}</p>
+              <p className="font-bold text-base md:text-lg text-white">₹{(userData.spentThisWeek || 0).toFixed(2)}</p>
             </div>
             <div className="bg-zinc-800/30 border border-zinc-800/50 rounded-xl p-3 flex-1">
               <div className="flex justify-between items-center mb-1">
@@ -197,7 +214,6 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-        
       </div>
     </div>
   );

@@ -3,10 +3,14 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, User, MapPin, Briefcase } from 'lucide-react';
+import { auth, db } from '@/firebase/config';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', dob: '', phone: '',
     panData: '', ssn: '', address: '', state: '', zip: '',
@@ -27,7 +31,7 @@ export default function RegisterPage() {
     return null;
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
     
@@ -38,7 +42,38 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push('/');
+    setIsLoading(true);
+    try {
+      // 1. Create Auth User
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      // 2. Initialize Firestore Vault
+      await setDoc(doc(db, "users", user.uid), {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        dob: formData.dob,
+        pan: formData.panData.toUpperCase(),
+        aadhar: formData.ssn,
+        address: formData.address,
+        state: formData.state,
+        zip: formData.zip,
+        employment: formData.employment,
+        income: formData.income,
+        balance: 0,
+        xp: 0,
+        level: 1,
+        createdAt: serverTimestamp()
+      });
+
+      router.push('/');
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Registration failed. This email might already be in use.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -133,8 +168,20 @@ export default function RegisterPage() {
           </div>
 
           <div className="pt-2">
-            <button type="submit" className="w-full bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black py-3 rounded-xl font-bold text-sm shadow-sm transition-all flex justify-center items-center gap-2">
-              Create Account
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className={twMerge(
+                "w-full bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black py-3 rounded-xl font-bold text-sm shadow-sm transition-all flex justify-center items-center gap-2",
+                isLoading && "opacity-70 cursor-wait"
+              )}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                   <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                   Initializing Vault...
+                </div>
+              ) : "Create Account"}
             </button>
           </div>
 

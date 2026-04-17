@@ -2,24 +2,30 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { auth } from '@/firebase/config';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/');
+    } catch (err) {
+      setError("Invalid email or password. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-
-    router.push('/');
   };
 
   return (
