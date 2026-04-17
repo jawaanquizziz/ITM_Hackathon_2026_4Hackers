@@ -21,6 +21,12 @@ export default function ClientWrapper({ children }) {
     }, 2800);
 
     // 2. Auth listener
+    if (!auth) {
+      console.warn("Auth not configured. Bypassing check.");
+      setIsAuthVerified(true);
+      return () => clearTimeout(timer);
+    }
+
     const unsub = onAuthStateChanged(auth, (user) => {
       setIsAuthVerified(true);
       
