@@ -227,18 +227,25 @@ export default function Dashboard() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1 }}
-        className="lg:col-span-2 bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-[2rem] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group"
+        className={`lg:col-span-2 bg-gradient-to-br from-zinc-900 to-black border rounded-[2rem] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group transition-colors duration-500 ${
+           ((userData.spendingLimit || 1000) - (userData.spentThisWeek || 0)) < 200 ? 'border-red-500/50 shadow-red-500/10' : 'border-zinc-800'
+        }`}
       >
         <div className="absolute bottom-[-20px] right-[-20px] w-64 h-64 bg-[radial-gradient(circle_at_center,_var(--color-pac-yellow)_0%,_transparent_70%)] opacity-10"></div>
         <div className="flex justify-between items-start relative z-10">
           <div>
             <div className="flex items-center gap-2 text-zinc-400 mb-1">
-              <Wallet size={16} />
-              <span className="text-[10px] font-black uppercase tracking-widest">Vault Balance</span>
+              <Zap size={16} className={((userData.spendingLimit || 1000) - (userData.spentThisWeek || 0)) < 200 ? 'text-red-400 animate-pulse' : 'text-zinc-500'} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Vault Capacity</span>
             </div>
-            <h2 className="text-5xl md:text-6xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform origin-left">
-              ₹{(userData.balance || 0).toLocaleString()}
+            <h2 className={`text-5xl md:text-6xl font-black tracking-tighter group-hover:scale-105 transition-all origin-left ${
+               ((userData.spendingLimit || 1000) - (userData.spentThisWeek || 0)) < 0 ? 'text-red-500' : 'text-white'
+            }`}>
+              ₹{((userData.spendingLimit || 1000) - (userData.spentThisWeek || 0)).toLocaleString()}
             </h2>
+            {((userData.spendingLimit || 1000) - (userData.spentThisWeek || 0)) < 0 && (
+               <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-2 animate-pulse">Threshold Exceeded // Ghost Mode Warning</p>
+            )}
           </div>
           <div className="p-3 bg-zinc-800/50 rounded-2xl border border-zinc-700 shadow-lg">
              <TrendingUp size={24} className="text-emerald-400" />
@@ -253,11 +260,11 @@ export default function Dashboard() {
                  <span className="text-xl font-black text-white">₹{(userData.spentThisWeek || 0).toLocaleString()}</span>
               </div>
            </div>
-           <div className="flex-1 bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Safe Savings</p>
+           <div className="flex-1 bg-gradient-to-tr from-zinc-900/80 to-zinc-800/80 border border-zinc-700/50 p-4 rounded-2xl shadow-inner">
+              <p className="text-[10px] font-bold text-[var(--color-pac-yellow)] uppercase tracking-widest mb-1">Total Credits</p>
               <div className="flex items-center gap-2">
-                 <ArrowUpRight size={16} className="text-emerald-400" />
-                 <span className="text-xl font-black text-white">₹{Math.floor((userData.balance || 0) * 0.3).toLocaleString()}</span>
+                 <Wallet size={16} className="text-[var(--color-pac-yellow)]" />
+                 <span className="text-xl font-black text-white">₹{(userData.balance || 0).toLocaleString()}</span>
               </div>
            </div>
         </div>
