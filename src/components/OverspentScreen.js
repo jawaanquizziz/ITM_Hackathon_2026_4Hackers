@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, RefreshCw, BarChart2, Award, ChevronRight } from 'lucide-react';
 
 export default function OverspentScreen() {
