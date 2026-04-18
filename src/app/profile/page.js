@@ -178,15 +178,17 @@ export default function ProfilePage() {
                
                <button 
                   onClick={() => {
+                     const referralMsg = `Hey there! 👋 I've started using PacPay, a really amazing secure financial arcade platform, and I thought you'd love it too.\n\nLet's build our wealth together! If you sign up using my referral link, we'll both receive a ₹100 instant bonus! 🎁\n\nJoin here: ${window.location.origin}\nArcade Code: ${profileData?.referralCode || 'PAC-DEMO'}`;
+                     
                      if (navigator.share) {
                         navigator.share({
-                           title: 'Join PacPay Arcade 🕹️',
-                           text: `🕹️ I've opened my secure financial vault in PacPay! Join me and we BOTH get ₹100 bonus instantly! Use my Arcade Code: ${profileData?.referralCode}`,
+                           title: 'Join me on PacPay! 🕹️',
+                           text: referralMsg,
                            url: window.location.origin,
                         }).catch(console.error);
                      } else {
-                        navigator.clipboard.writeText(`🕹️ Join me in PacPay and get ₹100 bonus! Use my Arcade Code: ${profileData?.referralCode}`);
-                        alert('Referral message copied to clipboard!');
+                        navigator.clipboard.writeText(referralMsg);
+                        alert('Referral message copied to clipboard! Share it with your friends.');
                      }
                   }}
                   className="bg-white text-black px-8 py-3 rounded-full font-black text-sm hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]"
