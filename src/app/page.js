@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { doc, onSnapshot, collection, query, where, orderBy, limit } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, orderBy, limit, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { atomicTransaction } from '@/services/transactionService';
@@ -18,9 +18,11 @@ import {
   ShieldAlert,
   Zap,
   User,
-  History
+  History,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ArcadePreview from '@/components/ArcadePreview';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -76,8 +78,18 @@ export default function Dashboard() {
         const data = doc.data();
         setUserData(prev => ({ ...prev, ...data }));
         
-        // AUTO-TRIGGER: If spent > 1000, trigger the animation!
-        if (data.spentThisWeek > 1000) {
+        // AUTO-TRIGGER: If spent > limit, trigger the animation!
+        const maxSpend = data.spendingLimit || 1000;
+        if (data.spentThisWeek > maxSpend) {
+          
+          // Demote Rank Logic: if level > 1 and haven't been demoted yet for this overspend
+          if (data.level > 1 && !data.rankDemotedThisWeek) {
+             updateDoc(doc(db, "users", user.uid), {
+                level: data.level - 1,
+                rankDemotedThisWeek: true,
+             }).catch(console.error);
+          }
+
           router.push('/overspent');
         }
       }
@@ -88,13 +100,18 @@ export default function Dashboard() {
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", user.uid),
-      orderBy("timestamp", "desc"),
-      limit(6)
+      limit(50)
     );
 
     const unsubTrans = onSnapshot(q, (snapshot) => {
       const transData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTransactions(transData);
+      // Client-side sort to avoid index requirement
+      const sorted = transData.sort((a, b) => {
+        const tA = a.timestamp?.seconds || 0;
+        const tB = b.timestamp?.seconds || 0;
+        return tB - tA;
+      }).slice(0, 6);
+      setTransactions(sorted);
     });
 
     return () => {
@@ -163,7 +180,7 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="lg:col-span-2 bg-[#121212] border border-zinc-800 rounded-[2rem] p-8 flex flex-col justify-between relative overflow-hidden group shadow-xl"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-pac-blue)] rounded-full blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <div className="absolute top-[-50px] right-[-50px] w-80 h-80 bg-[radial-gradient(circle_at_center,_var(--color-pac-blue)_0%,_transparent_70%)] opacity-20 group-hover:opacity-30 transition-opacity"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[var(--color-pac-yellow)]">
@@ -210,7 +227,7 @@ export default function Dashboard() {
         transition={{ delay: 0.1 }}
         className="lg:col-span-2 bg-gradient-to-br from-zinc-900 to-black border border-zinc-800 rounded-[2rem] p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden group"
       >
-        <div className="absolute bottom-0 right-0 w-48 h-48 bg-[var(--color-pac-yellow)] rounded-full blur-[90px] opacity-5"></div>
+        <div className="absolute bottom-[-20px] right-[-20px] w-64 h-64 bg-[radial-gradient(circle_at_center,_var(--color-pac-yellow)_0%,_transparent_70%)] opacity-10"></div>
         <div className="flex justify-between items-start relative z-10">
           <div>
             <div className="flex items-center gap-2 text-zinc-400 mb-1">
@@ -286,7 +303,7 @@ export default function Dashboard() {
         transition={{ delay: 0.3 }}
         className="bg-[#121212] border border-zinc-800 rounded-[2rem] p-6 flex flex-col gap-4 shadow-xl relative overflow-hidden group"
       >
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500 rounded-full blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <div className="absolute -top-10 -right-10 w-48 h-48 bg-[radial-gradient(circle_at_center,_#10b981_0%,_transparent_70%)] opacity-20 group-hover:opacity-30 transition-opacity"></div>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
             <Sparkles size={20} />
@@ -400,6 +417,74 @@ export default function Dashboard() {
          </div>
       </motion.div>
 
+      {/* 7. Arcade Live Preview */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="md:col-span-2 lg:col-span-4 bg-[#121212] border border-zinc-800 rounded-[2rem] p-6 shadow-xl relative overflow-hidden flex flex-col mt-4"
+      >
+        <div className="absolute -top-20 -left-20 w-80 h-80 bg-[radial-gradient(circle_at_center,_var(--color-pac-blue)_0%,_transparent_70%)] opacity-20"></div>
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[radial-gradient(circle_at_center,_var(--color-pac-yellow)_0%,_transparent_70%)] opacity-20"></div>
+        
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 relative z-10 gap-4">
+           <div>
+              <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2 font-heading tracking-tighter italic">
+                 <Sparkles className="text-[var(--color-pac-yellow)]" /> CYBERPUNK TRADING ARENA
+              </h3>
+              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mt-1">Live High-Fidelity Global Market Feed</p>
+           </div>
+           <button onClick={() => router.push('/arena')} className="bg-[var(--color-pac-yellow)] w-full md:w-auto text-black font-black text-xs px-8 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_25px_rgba(250,204,21,0.4)] flex items-center justify-center gap-3">
+              <Zap size={18} fill="black" /> INSERT COINS // PLAY
+           </button>
+        </div>
+        
+        <div 
+          className="w-full h-[400px] md:h-[550px] overflow-hidden" 
+          onClick={() => router.push('/arena')}
+        >
+           <ArcadePreview />
+        </div>
+      {/* 8. Future Tech Lab - The Vision */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="md:col-span-2 lg:col-span-4 mt-8"
+      >
+         <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+               <div className="w-2 h-2 bg-[var(--color-pac-blue)] rounded-full animate-ping"></div>
+            </div>
+            <h3 className="text-sm font-black text-zinc-500 uppercase tracking-[0.4em] italic">PAC-LABS / FUTURE SCOPE</h3>
+         </div>
+
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FutureTile 
+               icon={<Sparkles size={24} />}
+               title="Ghost AI Coach"
+               desc="Advanced Virtual Intelligence will soon analyze your vault to provide hyper-personalized savings strategies."
+               tag="RESEARCHING"
+               color="emerald"
+            />
+            <FutureTile 
+               icon={<Zap size={24} />}
+               title="Arcade Staking"
+               desc="Enter the Yield Quest. Lock your balance in the vault to earn Passive XP and exclusive Arcade NFT rewards."
+               tag="PROTOTYPING"
+               color="blue"
+            />
+            <FutureTile 
+               icon={<Users size={24} />}
+               title="Global Clan Wars"
+               desc="Team up with friends to form Savings Clans and battle other cities in global financial efficiency tournaments."
+               tag="PLANNED"
+               color="orange"
+            />
+         </div>
+      </motion.div>
+      </motion.div>
+
     </div>
   );
 }
@@ -419,4 +504,32 @@ function ActionTile({ icon, title, desc, color, onClick }) {
          </div>
       </div>
    );
+}
+
+function FutureTile({ icon, title, desc, tag, color }) {
+    const colorClasses = {
+        emerald: "border-emerald-500/20 text-emerald-400 bg-emerald-500/5",
+        blue: "border-blue-500/20 text-blue-400 bg-blue-500/5",
+        orange: "border-orange-500/20 text-orange-400 bg-orange-500/5"
+    };
+
+    return (
+        <div className={`p-8 rounded-[2rem] border ${colorClasses[color]} flex flex-col gap-4 relative overflow-hidden group hover:scale-[1.02] transition-all cursor-default`}>
+            <div className="flex justify-between items-start">
+               <div className="w-12 h-12 rounded-2xl bg-zinc-900/50 flex items-center justify-center">
+                  {icon}
+               </div>
+               <span className="text-[8px] font-black tracking-widest bg-zinc-900/50 px-3 py-1 rounded-full border border-white/5 opacity-60">
+                  {tag}
+               </span>
+            </div>
+            <div>
+               <h4 className="font-black text-white text-lg tracking-tighter mb-2 italic uppercase">{title}</h4>
+               <p className="text-zinc-500 text-xs font-medium leading-relaxed">
+                  {desc}
+               </p>
+            </div>
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-current opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity"></div>
+        </div>
+    );
 }

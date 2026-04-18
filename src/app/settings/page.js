@@ -15,6 +15,7 @@ export default function SettingsPage() {
     state: '',
     zip: '',
     employment: '',
+    spendingLimit: 1000,
     bio: 'Financial Gamer'
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +53,7 @@ export default function SettingsPage() {
           state: 'Maharashtra',
           zip: '400001',
           employment: 'Professional Gamer',
+          spendingLimit: 1000,
           bio: 'Financial Gamer'
         });
         setIsLoading(false);
@@ -69,6 +71,7 @@ export default function SettingsPage() {
           state: data.state || '',
           zip: data.zip || '',
           employment: data.employment || '',
+          spendingLimit: data.spendingLimit || 1000,
           bio: 'Financial Gamer'
         });
       }
@@ -79,7 +82,8 @@ export default function SettingsPage() {
   }, [user]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+    setFormData({ ...formData, [e.target.name]: value });
   };
 
   const handleUpdate = async (e) => {
@@ -173,6 +177,21 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-4">
+                     <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Finance Limits</h3>
+                     <div className="bg-orange-500/5 p-4 rounded-2xl border border-orange-500/20">
+                        <p className="text-xs font-bold text-orange-400 mb-4 tracking-wide uppercase">Arcade Spending Threshold</p>
+                        <InputGroup 
+                           label="Max Weekly Spend (₹)" 
+                           name="spendingLimit" 
+                           type="number"
+                           value={formData.spendingLimit} 
+                           onChange={handleChange} 
+                        />
+                        <p className="text-[10px] text-zinc-500 mt-3 italic">Warning: Exceeding this limit will result in an immediate Arcade Rank demotion!</p>
+                     </div>
+                  </div>
+
+                  <div className="space-y-4">
                      <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Vault Status</h3>
                      <div className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 flex items-center justify-between opacity-60 grayscale cursor-not-allowed">
                         <div className="flex items-center gap-3">
@@ -226,12 +245,12 @@ function SettingsSidebarItem({ icon, label, active = false }) {
    );
 }
 
-function InputGroup({ label, name, value, onChange }) {
+function InputGroup({ label, name, value, onChange, type = "text" }) {
    return (
       <div className="flex flex-col gap-2">
          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">{label}</label>
          <input 
-            type="text" 
+            type={type} 
             name={name}
             value={value}
             onChange={onChange}

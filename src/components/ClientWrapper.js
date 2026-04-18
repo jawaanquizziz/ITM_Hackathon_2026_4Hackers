@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '@/firebase/config';
 import { usePathname, useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
 import SplashScreen from './SplashScreen';
+import AgentChatbot from './AgentChatbot';
 import { TopNavbar, BottomNavigation } from './Navigation';
 import { FAB } from './FAB';
 import InstallPrompt from './InstallPrompt';
@@ -20,34 +20,47 @@ export default function ClientWrapper({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Splash timer — always run for the minimum duration
+  // 1. Splash Timer
   useEffect(() => {
     const timer = setTimeout(() => setSplashDone(true), SPLASH_DURATION);
     return () => clearTimeout(timer);
   }, []);
 
-  // Auth listener
+  // 2. Auth Context Integration
   useEffect(() => {
-    if (!auth) {
-      // Demo mode: no Firebase, skip auth check
-      console.warn('Firebase Auth not available. Running in Demo Mode.');
-      setIsLoggedIn(true);
+    const handleInitialAuth = async () => {
+      if (!auth) {
+        setIsLoggedIn(false);
+        setAuthChecked(true);
+        return;
+      }
+
+      // Proactive force-logout to ensure Login screen is always the mandatory portal
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error("Auth Reset Failed:", err);
+      }
+      
+      setIsLoggedIn(false);
       setAuthChecked(true);
-      return;
+    };
+
+    handleInitialAuth();
+
+    if (auth) {
+      const unsub = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      });
+      return () => unsub();
     }
-
-    // Force sign out on initial load for demo purposes so it always shows the login screen
-    signOut(auth).catch(console.error);
-
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user);
-      setAuthChecked(true);
-    });
-
-    return () => unsub();
   }, []);
 
-  // Route guard — only runs once both checks are done and splash is shown
+  // 3. Routing Guard
   useEffect(() => {
     if (!splashDone || !authChecked) return;
 
@@ -60,20 +73,31 @@ export default function ClientWrapper({ children }) {
     }
   }, [splashDone, authChecked, isLoggedIn, pathname, router]);
 
-  // Show splash until both the timer is up AND auth state is known
+  // ─── RENDERING LOGIC ───────────────────────────────────────────
+
   const showSplash = !splashDone || !authChecked;
 
-  // While splash is up, always show it
+  // Level 1: Splash Screen (Always first)
   if (showSplash) {
     return (
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         <SplashScreen key="splash" />
       </AnimatePresence>
     );
   }
 
-  // After splash, if on a public route (login/register), render children with no nav
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+
+  // Level 2: Safeguard against Dashboard Flicker
+  if (!isLoggedIn && !isPublicRoute) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-zinc-900 border-t-[var(--color-pac-blue)] rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // Level 3: Auth/Public Pages (Login/Register)
   if (isPublicRoute) {
     return (
       <div className="animate-in fade-in duration-500 min-h-screen flex flex-col items-center justify-center bg-[#050505]">
@@ -82,13 +106,14 @@ export default function ClientWrapper({ children }) {
     );
   }
 
-  // Main app shell with nav
+  // Level 4: Main Application Shell (Authenticated)
   return (
     <div className="animate-in fade-in duration-700 min-h-screen flex flex-col">
       <TopNavbar />
-      <main className="flex-1 pb-24 md:pb-12 pt-6 md:pt-28 px-4 w-full max-w-lg md:max-w-6xl mx-auto flex flex-col relative z-10 transition-all duration-500">
+      <main className="flex-1 pb-32 pt-28 px-4 w-full max-w-6xl mx-auto flex flex-col relative z-10">
         {children}
       </main>
+      <AgentChatbot />
       <FAB />
       <BottomNavigation />
       <InstallPrompt />

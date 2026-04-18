@@ -15,7 +15,7 @@
   }
   
   html, body {
-    @apply antialiased bg-[var(--background)] text-[var(--foreground)] h-full w-full overflow-x-hidden;
+    @apply antialiased bg-[var(--background)] text-[var(--foreground)] min-h-screen w-full overflow-x-hidden;
     /* Soft premium dark gradient */
     background: radial-gradient(circle at top right, #111827, #050505);
   }

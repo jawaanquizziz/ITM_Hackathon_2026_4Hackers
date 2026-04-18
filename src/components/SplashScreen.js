@@ -43,27 +43,25 @@ export default function SplashScreen() {
       {/* Main Canvas Area */}
       <div className="relative w-full max-w-sm flex flex-col items-center justify-center z-10 h-[250px] md:h-64">
         
-        {/* Phase 0: The Pac-Man Entering */}
+        {/* Phase 0: The Pac-Man Entering / Eating */}
         <AnimatePresence>
           {phase < 2 && (
             <motion.div 
-              initial={{ x: -150, scale: 0.5 }}
-              animate={{ x: 0, scale: 1 }}
+              initial={{ x: -200, scale: 0.8 }}
+              animate={{ x: 150, scale: 0.8 }}
               exit={{ scale: 0, opacity: 0, transition: { duration: 0.2 } }}
-              transition={{ duration: 1.5, type: "spring", bounce: 0.3 }}
+              transition={{ duration: 1.8, ease: "linear" }}
               className="absolute z-20 flex items-center justify-center"
             >
               <div className="relative group flex items-center justify-center">
-                {/* Ambient Yellow Glow */}
                 <div className="absolute inset-0 bg-[#FACC15] blur-[40px] opacity-40 rounded-full scale-110"></div>
-                
                 <svg width="120" height="120" viewBox="0 0 100 100" className="relative z-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]">
                   <motion.path
                     fill="#FACC15"
                     animate={{
                       d: isChomped 
-                        ? "M 50 50 L 100 49 A 50 50 0 1 0 100 51 Z"  // Mouth Closed (Line to right edge, arc full circle back to right edge)
-                        : "M 50 50 L 85.35 14.65 A 50 50 0 1 0 85.35 85.35 Z" // Mouth Open (45 degree slice removed from right)
+                        ? "M 50 50 L 100 49 A 50 50 0 1 0 100 51 Z" 
+                        : "M 50 50 L 85.35 14.65 A 50 50 0 1 0 85.35 85.35 Z"
                     }}
                     transition={{ duration: 0.12 }}
                   />
@@ -73,23 +71,27 @@ export default function SplashScreen() {
           )}
         </AnimatePresence>
 
-        {/* Phase 0: The Dots getting eaten */}
+        {/* Phase 0: The Dots getting eaten chronologically */}
         <AnimatePresence>
           {phase === 0 && (
-            <div className="absolute flex space-x-8 left-[90px] z-10 top-1/2 -translate-y-1/2 mt-1">
-              {[0, 1, 2, 3].map((i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0, x: -40 }}
-                  transition={{ 
-                    delay: i * 0.15, 
-                    exit: { duration: 0.2, delay: 0 }
-                  }}
-                  className="w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_12px_#fff]"
-                />
-              ))}
+            <div className="absolute flex space-x-[34px] left-[calc(50%-40px)] z-10 top-1/2 -translate-y-1/2 mt-1">
+              {[0, 1, 2, 3].map((i) => {
+                // Precise timing offsets to match the linear speed of Pac-Man (from -200 to +150 in 1.8s)
+                const disappearTime = 0.80 + (i * 0.20); 
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 1, scale: 1 }}
+                    animate={{ opacity: [1, 1, 0, 0], scale: [1, 1, 0, 0] }}
+                    transition={{ 
+                      duration: 1.8, 
+                      times: [0, disappearTime/1.8, (disappearTime+0.05)/1.8, 1],
+                      ease: "linear"
+                    }}
+                    className="w-3.5 h-3.5 bg-[var(--color-pac-yellow)] rounded-full shadow-[0_0_15px_#FACC15]"
+                  />
+                );
+              })}
             </div>
           )}
         </AnimatePresence>
