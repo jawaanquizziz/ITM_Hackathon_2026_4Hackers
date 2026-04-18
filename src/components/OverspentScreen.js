@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import { ShieldAlert, RefreshCw, BarChart2, Award } from 'lucide-react';
+import { ShieldAlert, RefreshCw, BarChart2, Award, ChevronRight } from 'lucide-react';
 
 export default function OverspentScreen() {
   const [level, setLevel] = useState('Gold');
@@ -72,6 +72,12 @@ export default function OverspentScreen() {
     setAnimationStage('downgraded');
     setLevel('Silver');
 
+    // Screen Shake on downgrade
+    await controls.start({
+      x: [0, -20, 20, -20, 20, 0],
+      transition: { duration: 0.4 }
+    });
+
     // New badge "pops" back out
     await badgeControls.start({
       scale: [0, 1.5, 1],
@@ -82,47 +88,116 @@ export default function OverspentScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-white font-sans selection:bg-neon-yellow selection:text-black">
+    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 text-white font-sans overflow-hidden relative">
       
-      {/* Main Card */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden relative"
-      >
-        {/* Background Glow when downgraded */}
+      {/* 1. ARCADE BACKGROUND: Neon Grid */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none overflow-hidden">
+        <div 
+          className="absolute inset-0" 
+          style={{ 
+            backgroundImage: `linear-gradient(to right, #1e40af 1px, transparent 1px), linear-gradient(to bottom, #1e40af 1px, transparent 1px)`, 
+            backgroundSize: '40px 40px',
+            maskImage: 'radial-gradient(circle at center, black 40%, transparent 90%)'
+          }}
+        ></div>
+        {/* Scrolling Floor Effect */}
         <motion.div 
-          className="absolute inset-0 bg-red-500/5 mix-blend-screen pointer-events-none"
-          animate={{ opacity: animationStage === 'downgraded' ? 1 : 0 }}
-          transition={{ duration: 1 }}
+          animate={{ backgroundPositionY: [0, 40] }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-0 w-full h-1/2 opacity-40"
+          style={{ 
+            backgroundImage: `linear-gradient(to bottom, transparent, #1e40af 1px, transparent 1px)`, 
+            backgroundSize: '100% 40px',
+            transform: 'perspective(500px) rotateX(60deg)'
+          }}
         />
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-10 relative z-10">
+      {/* 2. CRT SCANLINES OVERLAY */}
+      <div className="absolute inset-0 pointer-events-none z-[100] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%]"></div>
+
+      {/* 3. DECORATIVE GHOSTS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+         <motion.div animate={{ y: [0, -20, 0], x: [0, 10, 0] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-20 left-20 text-red-500 text-6xl opacity-30">👻</motion.div>
+         <motion.div animate={{ y: [0, 30, 0], x: [0, -15, 0] }} transition={{ duration: 5, repeat: Infinity }} className="absolute bottom-40 right-20 text-blue-400 text-6xl opacity-20">👻</motion.div>
+      </div>
+
+      {/* 4. MAIN HUD (High Score Area) */}
+      <div className="absolute top-10 w-full flex justify-between px-10 font-mono text-[var(--color-pac-yellow)] tracking-tighter z-50">
+         <div className="flex flex-col">
+            <span className="text-[10px] opacity-50 uppercase">1UP</span>
+            <span className="text-xl font-black">2,450</span>
+         </div>
+         <div className="flex flex-col items-center">
+            <span className="text-[10px] opacity-50 uppercase italic font-black">BUDGET EXCEEDED</span>
+            <motion.span 
+              animate={{ opacity: [1, 0, 1] }} 
+              transition={{ duration: 0.5, repeat: Infinity }}
+              className="text-xl font-black text-red-500"
+            >
+              LIMIT ERROR
+            </motion.span>
+         </div>
+         <div className="flex flex-col items-end">
+            <span className="text-[10px] opacity-50 uppercase">HI-SCORE</span>
+            <span className="text-xl font-black">99,999</span>
+         </div>
+      </div>
+
+      {/* 5. MAIN CONSOLE CARD */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md bg-[#0a0a0a]/90 backdrop-blur-xl border-4 border-zinc-800 rounded-[2.5rem] p-8 shadow-[0_0_80px_rgba(0,0,0,1)] relative z-20 arcade-border"
+      >
+        {/* Neon Glow around the card */}
+        <div className="absolute -inset-[2px] rounded-[2.5rem] bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500 opacity-20 blur-sm -z-10"></div>
+
+        {/* Header Section */}
+        <div className="text-center mb-12">
           <motion.div 
-            className="mx-auto w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4"
+            className="mx-auto w-20 h-20 bg-red-500/10 rounded-2xl flex items-center justify-center mb-6 border-2 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
             animate={{ 
-              boxShadow: animationStage === 'downgraded' 
-                ? ['0 0 0px rgba(239,68,68,0)', '0 0 20px rgba(239,68,68,0.5)', '0 0 0px rgba(239,68,68,0)'] 
-                : 'none'
+              scale: animationStage === 'downgraded' ? [1, 1.1, 1] : 1,
+              borderColor: animationStage === 'downgraded' ? ['rgba(239,68,68,0.3)', 'rgba(239,68,68,0.8)', 'rgba(239,68,68,0.3)'] : 'rgba(239,68,68,0.3)'
             }}
-            transition={{ repeat: Infinity, duration: 2 }}
+            transition={{ repeat: Infinity, duration: 1 }}
           >
-            <ShieldAlert className="w-8 h-8 text-red-500" />
+            <ShieldAlert className="w-10 h-10 text-red-500" />
           </motion.div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">You Overspent Today <span className="text-2xl">💸</span></h1>
-          <p className="text-gray-400 text-sm">
-            Daily limit: ₹1000 &nbsp;|&nbsp; Spent: <span className="text-red-400 font-semibold">₹1250</span>
-          </p>
+          <h1 className="text-4xl font-black tracking-tighter mb-2 font-heading uppercase">
+            Game Over <span className="text-red-500 font-arcade">!</span>
+          </h1>
+          <div className="flex items-center justify-center gap-2">
+             <div className="h-[2px] w-8 bg-zinc-800"></div>
+             <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Daily Limit Violated</p>
+             <div className="h-[2px] w-8 bg-zinc-800"></div>
+          </div>
+        </div>
+
+        {/* STATS HUD INSIDE CARD */}
+        <div className="grid grid-cols-2 gap-4 mb-10">
+           <div className="bg-zinc-900/50 p-3 rounded-2xl border border-zinc-800/50">
+              <span className="text-[8px] font-black text-zinc-500 uppercase block mb-1">Limit Set</span>
+              <span className="text-lg font-bold">₹1,000</span>
+           </div>
+           <div className="bg-red-500/5 p-3 rounded-2xl border border-red-500/20">
+              <span className="text-[8px] font-black text-red-400 uppercase block mb-1">Final Spend</span>
+              <span className="text-lg font-bold text-red-500">₹1,250</span>
+           </div>
         </div>
 
         {/* The Track and Pac-Man Sequence */}
-        <div className="relative w-full h-16 mb-12 flex items-center">
+        <div className="relative w-full h-24 mb-12 flex items-center px-4 bg-zinc-900/30 rounded-3xl border border-zinc-800/30 overflow-hidden">
           
           {/* Progress Bar Background */}
-          <div className="absolute w-full h-3 bg-gray-800 rounded-full overflow-hidden shadow-inner">
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+             <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle, #3b82f6 1px, transparent 1px)', backgroundSize: '15px 15px' }}></div>
+          </div>
+
+          <div className="absolute left-6 right-6 h-1 bg-zinc-800 rounded-full">
             <motion.div 
-              className="h-full bg-red-500/50"
+              className="h-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]"
               initial={{ width: '0%' }}
               animate={{ width: '100%' }}
               transition={{ duration: MOVEMENT_DURATION, ease: 'linear' }}
@@ -144,24 +219,22 @@ export default function OverspentScreen() {
                   opacity: { duration: 0.15 },
                   rotateY: { repeat: Infinity, duration: 1.5, ease: "linear" }
                 }}
-                className="w-3 h-3 rounded-full bg-gradient-to-t from-yellow-600 to-yellow-300 border border-yellow-700/50 shadow-[0_0_10px_rgba(250,204,21,0.4)] flex items-center justify-center text-[6px] font-black text-yellow-900/80"
+                className="w-4 h-4 rounded-full bg-gradient-to-t from-yellow-600 to-yellow-300 border border-yellow-700/50 shadow-[0_0_12px_rgba(250,204,21,0.5)] flex items-center justify-center text-[7px] font-black text-yellow-900/80"
               >
                 ₹
               </motion.div>
             ))}
           </div>
 
-          {/* Pac-Man Character (MATCHES SPLASH SCREEN) */}
+          {/* Pac-Man Character */}
           <motion.div 
             animate={controls}
             className="absolute left-0 -ml-5 z-20 flex items-center justify-center"
             style={{ width: 'calc(100% - 2.5rem)' }} 
           >
-            <div className="relative w-12 h-12 flex items-center justify-center">
-              {/* Ambient Yellow Glow */}
-              <div className="absolute inset-0 bg-[#FACC15] blur-[15px] opacity-40 rounded-full"></div>
-              
-              <svg width="48" height="48" viewBox="0 0 100 100" className="relative z-10 drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]">
+            <div className="relative w-14 h-14 flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#FACC15] blur-[15px] opacity-30 rounded-full"></div>
+              <svg width="56" height="56" viewBox="0 0 100 100" className="relative z-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]">
                 <motion.path
                   fill="#FACC15"
                   animate={{
@@ -178,74 +251,70 @@ export default function OverspentScreen() {
           {/* Target Badge */}
           <motion.div 
             animate={badgeControls}
-            className="absolute right-0 z-10"
+            className="absolute right-4 z-10"
           >
             <div className="relative">
-              {/* Crack overlay when impacted */}
-              {animationStage === 'impact' && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="absolute inset-0 z-20 text-white flex items-center justify-center font-bold text-2xl drop-shadow-md"
-                >
-                  ⚡
-                </motion.div>
-              )}
-              
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center border-4 shadow-lg transition-colors duration-700
+              <div className={`w-16 h-16 rounded-3xl flex items-center justify-center border-4 shadow-2xl transition-all duration-700 rotate-12
                 ${level === 'Gold' 
-                  ? 'bg-gradient-to-br from-yellow-300 to-yellow-600 border-yellow-200 shadow-[0_0_20px_rgba(250,204,21,0.5)]' 
-                  : 'bg-gradient-to-br from-gray-300 to-gray-500 border-gray-200 shadow-[0_0_15px_rgba(156,163,175,0.3)] grayscale'
+                  ? 'bg-gradient-to-br from-yellow-300 to-yellow-600 border-yellow-200 shadow-[0_0_30px_rgba(250,204,21,0.6)]' 
+                  : 'bg-gradient-to-br from-zinc-700 to-zinc-900 border-zinc-600 shadow-[0_0_20px_rgba(0,0,0,0.5)] grayscale'
                 }`}
               >
-                <Award className={`w-7 h-7 ${level === 'Gold' ? 'text-yellow-100' : 'text-gray-100'}`} />
+                <Award className={`w-8 h-8 ${level === 'Gold' ? 'text-yellow-100' : 'text-zinc-300'}`} />
               </div>
             </div>
           </motion.div>
         </div>
 
         {/* Level Downgrade Text */}
-        <div className="text-center mb-8 relative z-10 h-16">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: animationStage === 'downgraded' ? 1 : 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-red-400 font-semibold uppercase tracking-wider text-sm mb-1">Level Downgraded</p>
-            <p className="text-gray-300">
-              <span className="line-through text-gray-600 mr-2">Gold Saver</span> 
-              <span className="font-bold text-gray-100">Silver Saver</span>
-            </p>
-          </motion.div>
+        <div className="text-center mb-10 h-16">
+          <AnimatePresence>
+            {animationStage === 'downgraded' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="flex flex-col items-center"
+              >
+                <span className="text-red-500 font-black uppercase tracking-[0.3em] text-[10px] mb-2 px-3 py-1 bg-red-500/10 rounded-full border border-red-500/20">Rank Decreased</span>
+                <div className="flex items-center gap-3">
+                   <span className="line-through text-zinc-600 font-bold text-sm">GOLD SAVER</span>
+                   <ChevronRight className="text-zinc-700" size={16} />
+                   <span className="font-black text-white text-lg tracking-tight shadow-text">SILVER SAVER</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Subtext */}
-        <p className="text-center text-gray-500 text-sm mb-8 px-4 leading-relaxed relative z-10">
-          You exceeded your daily limit. Stay on track tomorrow to regain your <strong className="text-yellow-500">Gold</strong> level.
-        </p>
-
         {/* Action Buttons */}
-        <div className="flex flex-col gap-3 relative z-10">
+        <div className="flex flex-col gap-4 relative z-10">
           <button 
             onClick={() => {
               setLevel('Gold');
               setAnimationStage('idle');
               setEatenDots([]);
-              controls.set({ x: '0%' });
+              controls.set({ x: '0%', scale: 1 });
               setTimeout(startSequence, 500);
             }}
-            className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(250,204,21,0.3)] hover:shadow-[0_0_25px_rgba(250,204,21,0.5)] flex items-center justify-center gap-2"
+            className="w-full bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black font-black py-4 px-4 rounded-2xl transition-all shadow-[0_0_30px_rgba(250,204,21,0.4)] hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 uppercase text-xs tracking-widest"
           >
             <RefreshCw className="w-5 h-5" />
-            Try Again Tomorrow
+            Restart Level
           </button>
           
-          <button className="w-full bg-gray-800 hover:bg-gray-700 text-white font-medium py-3.5 px-4 rounded-xl transition-colors border border-gray-700 hover:border-gray-600 flex items-center justify-center gap-2">
+          <button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold py-4 px-4 rounded-2xl transition-all border border-zinc-800 hover:border-zinc-700 flex items-center justify-center gap-2 text-xs tracking-widest">
             <BarChart2 className="w-5 h-5" />
-            View Spending Insights
+            Analyze Failures
           </button>
         </div>
       </motion.div>
+
+      {/* FOOTER HINT */}
+      <p className="mt-8 text-zinc-600 text-[10px] font-black uppercase tracking-[0.4em] opacity-40 z-10">
+         Press Start to Continue
+      </p>
+
     </div>
   );
 }
+
