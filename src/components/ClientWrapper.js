@@ -17,33 +17,38 @@ export default function ClientWrapper({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Force sign-out ONLY on the very first mount of the app, ensuring the presentation starts at the Login page.
+    if (auth) {
+      signOut(auth).catch(console.error);
+    }
+    
     // 1. Min splash duration
     const timer = setTimeout(() => {
       setLoading(false);
     }, 2800);
 
+    return () => clearTimeout(timer);
+  }, []); // Run on initial mount only!
+
+  useEffect(() => {
     // 2. Auth listener
     if (!auth) {
       console.warn("Auth not configured. Bypassing check.");
       setIsAuthVerified(true);
-      return () => clearTimeout(timer);
+      return;
     }
 
     const unsub = onAuthStateChanged(auth, (currentUser) => {
       setIsAuthVerified(true);
       setUser(currentUser);
       
-      // If we are verified and on a protected route while logged out, redirect
-      const isAuthRoute = pathname === '/login' || pathname === '/register';
+      const isAuthRoute = pathname?.startsWith('/login') || pathname?.startsWith('/register');
       if (!currentUser && !isAuthRoute) {
         router.push('/login');
       }
     });
 
-    return () => {
-      clearTimeout(timer);
-      unsub();
-    };
+    return () => unsub();
   }, [pathname, router]);
 
   // Wait for both timer and auth to be known before hiding splash
@@ -60,7 +65,7 @@ export default function ClientWrapper({ children }) {
           <TopNavbar />
           
           <main className="flex-1 pb-24 md:pb-12 pt-6 md:pt-28 px-4 w-full max-w-lg md:max-w-6xl mx-auto flex flex-col relative z-10 transition-all duration-500">
-            {(!user && !(pathname === '/login' || pathname === '/register')) ? null : children}
+            {children}
           </main>
 
           <FAB />
