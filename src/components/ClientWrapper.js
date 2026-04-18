@@ -7,7 +7,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import SplashScreen from './SplashScreen';
 import AgentChatbot from './AgentChatbot';
 import { TopNavbar, BottomNavigation } from './Navigation';
-import { FAB } from './FAB';
 import InstallPrompt from './InstallPrompt';
 
 const PUBLIC_ROUTES = ['/login', '/register'];
@@ -103,11 +102,10 @@ export default function ClientWrapper({ children }) {
   return (
     <div className="animate-in fade-in duration-700 min-h-screen flex flex-col">
       <TopNavbar />
-      <main className="flex-1 pb-32 pt-28 px-4 w-full max-w-6xl mx-auto flex flex-col relative z-10">
+      <main className="flex-1 pb-32 pt-28 px-4 w-full max-w-[1400px] mx-auto flex flex-col relative z-10 transition-all duration-500">
         {children}
       </main>
       <AgentChatbot />
-      <FAB />
       <BottomNavigation />
       <InstallPrompt />
     </div>

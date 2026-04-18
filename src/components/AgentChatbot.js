@@ -87,7 +87,7 @@ export default function AgentChatbot() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-[100] w-14 h-14 rounded-2xl bg-[var(--color-pac-blue)] text-white flex items-center justify-center shadow-[0_0_30px_rgba(14,165,233,0.4)] border border-white/20"
+        className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-[100] w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[var(--color-pac-blue)] text-white flex items-center justify-center shadow-[0_0_30px_rgba(14,165,233,0.3)] border border-white/10"
       >
         <AnimatePresence mode="wait">
           {isOpen ? (

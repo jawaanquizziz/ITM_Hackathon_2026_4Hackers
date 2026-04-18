@@ -382,12 +382,11 @@ export default function Dashboard() {
          </div>
       </motion.div>
 
-      {/* 6. Quick Actions Grid - Spans 2 */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="md:col-span-2 grid grid-cols-2 gap-4 h-full"
+        className="md:col-span-2 lg:col-span-2 lg:col-start-2 grid grid-cols-2 gap-4 h-full"
       >
          <ActionTile 
             icon={<User size={24}/>} 
@@ -403,17 +402,17 @@ export default function Dashboard() {
             color="border-emerald-500/20 text-emerald-400" 
             onClick={() => setIsModalOpen(true)}
          />
-         <div className="col-span-2 flex flex-col justify-center relative group overflow-hidden bg-gradient-to-r from-[var(--color-pac-yellow)] to-orange-400 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-all"
+         <div className="col-span-2 flex flex-col justify-center items-center text-center relative group overflow-hidden bg-gradient-to-r from-[var(--color-pac-yellow)] to-orange-400 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-all"
               onClick={() => handleAddMoney(500)}>
             <div className="absolute right-[-10px] top-[-10px] opacity-10 rotate-12 scale-150">
                <Wallet size={120} fill="black" />
             </div>
-            <div className="relative z-10 flex items-center justify-between">
+            <div className="relative z-10 flex flex-col items-center gap-4">
                <div>
-                  <h4 className="text-xl font-black text-black tracking-tighter uppercase">Instant Vault Refill</h4>
+                  <h4 className="text-xl font-black text-black tracking-tighter uppercase transition-transform group-hover:scale-105">Instant Vault Refill</h4>
                   <p className="text-black/60 text-xs font-bold uppercase tracking-widest">Get ₹500 credits now</p>
                </div>
-               <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-[var(--color-pac-yellow)] shadow-lg">
+               <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-[var(--color-pac-yellow)] shadow-lg transition-all group-hover:rotate-12">
                   <Plus size={24} strokeWidth={3} />
                </div>
             </div>
@@ -501,14 +500,14 @@ function ActionTile({ icon, title, desc, color, onClick }) {
    return (
       <div 
         onClick={onClick}
-        className={`bg-[#121212] border ${color} rounded-[2rem] p-6 flex flex-col justify-between hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer group shadow-lg`}
+        className={`bg-[#121212] border ${color} rounded-[2rem] p-6 flex flex-col items-center text-center justify-between hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer group shadow-lg`}
       >
-         <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 group-hover:bg-zinc-800 transition-colors">
+         <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4 group-hover:bg-zinc-800 transition-colors group-hover:rotate-12">
             {icon}
          </div>
          <div>
-            <h4 className="font-black text-white text-lg tracking-tighter leading-none">{title}</h4>
-            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{desc}</p>
+            <h4 className="font-black text-white text-lg tracking-tighter leading-none mb-1">{title}</h4>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{desc}</p>
          </div>
       </div>
    );

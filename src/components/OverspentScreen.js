@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
-import { ShieldAlert, RefreshCw, BarChart2, Award, ChevronRight } from 'lucide-react';
+import { ShieldAlert, RefreshCw, BarChart2, Award, ChevronRight, Home } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function OverspentScreen() {
   const [level, setLevel] = useState('Gold');
@@ -10,6 +11,7 @@ export default function OverspentScreen() {
   const [eatenDots, setEatenDots] = useState([]);
   const controls = useAnimation();
   const badgeControls = useAnimation();
+  const router = useRouter();
 
   const DOT_COUNT = 10;
   const [isChomped, setIsChomped] = useState(false);
@@ -302,9 +304,12 @@ export default function OverspentScreen() {
             Restart Level
           </button>
           
-          <button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold py-4 px-4 rounded-2xl transition-all border border-zinc-800 hover:border-zinc-700 flex items-center justify-center gap-2 text-xs tracking-widest">
-            <BarChart2 className="w-5 h-5" />
-            Analyze Failures
+          <button 
+            onClick={() => router.push('/')}
+            className="w-full bg-zinc-900/50 hover:bg-zinc-800 text-zinc-400 font-bold py-4 px-4 rounded-2xl transition-all border border-zinc-800 hover:border-zinc-700 flex items-center justify-center gap-2 text-xs tracking-widest"
+          >
+            <Home className="w-5 h-5" />
+            Return to Dashboard
           </button>
         </div>
       </motion.div>

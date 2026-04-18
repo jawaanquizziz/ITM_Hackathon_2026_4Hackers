@@ -5,6 +5,8 @@ import { Doughnut, Line } from 'react-chartjs-2';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
+import AddTransactionModal from '@/components/AddTransactionModal';
+import { Plus } from 'lucide-react';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
@@ -12,6 +14,7 @@ export default function InsightsPage() {
   const [transactions, setTransactions] = useState([]);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!auth) return;
@@ -110,10 +113,19 @@ export default function InsightsPage() {
       
       <div className="w-full bg-black/40 p-5 md:p-8 rounded-[2rem] border border-zinc-800 relative overflow-hidden flex flex-col items-center text-center">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-pac-blue)] to-transparent opacity-50"></div>
-        <h1 className="text-xl md:text-3xl font-black font-heading text-white tracking-tighter">
-           STATS <span className="text-[var(--color-pac-blue)]">&amp; DATA</span>
-        </h1>
-        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mt-1">Real-time Performance Metrics</p>
+        <div className="flex items-center gap-4 mb-2">
+           <h1 className="text-xl md:text-3xl font-black font-heading text-white tracking-tighter">
+              STATS <span className="text-[var(--color-pac-blue)]">&amp; DATA</span>
+           </h1>
+           <button 
+              onClick={() => setIsModalOpen(true)}
+              className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[var(--color-pac-yellow)] text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg"
+              title="Add Transaction"
+           >
+              <Plus size={20} strokeWidth={3} />
+           </button>
+        </div>
+        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Real-time Performance Metrics</p>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6 w-full">
@@ -164,6 +176,12 @@ export default function InsightsPage() {
           )}
         </div>
       </div>
+
+      <AddTransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        userId={user?.uid} 
+      />
     </div>
   );
 }
