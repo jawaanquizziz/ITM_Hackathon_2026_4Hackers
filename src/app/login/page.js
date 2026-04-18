@@ -3,7 +3,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/firebase/config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { 
+  signInWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect,
+  browserPopupRedirectResolver 
+} from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { generateReferralCode } from '@/services/transactionService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
@@ -74,21 +80,35 @@ export default function LoginPage() {
     setError('');
     setGoogleLoading(true);
     try {
-      if (!auth) throw new Error('Firebase is not configured.');
+      if (!auth) throw new Error('Firebase configuration missing in .env.local');
+      
       const provider = new GoogleAuthProvider();
       provider.addScope('email');
       provider.addScope('profile');
-      const result = await signInWithPopup(auth, provider);
-      await ensureUserVault(result.user);
-      router.replace('/');
+      
+      // Attempt Popup first (Better for desktop UX)
+      try {
+        const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+        await ensureUserVault(result.user);
+        router.replace('/');
+      } catch (popupErr) {
+        // If popup is blocked or fails on mobile, try Redirect
+        if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request') {
+          console.log('Popup failed/blocked, attempting redirect flow...');
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw popupErr;
+        }
+      }
     } catch (err) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        setError('Sign-in cancelled.');
-      } else if (err.code === 'auth/popup-blocked') {
-        setError('Popup was blocked by your browser. Please allow popups for this site.');
+      console.error('Final Auth Error:', err.code, err.message);
+      
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Google Sign-In is not enabled in Firebase Console. Please enable it in Authentication > Sign-in method.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('This domain is not authorized. Please add it in Firebase Console > Authentication > Settings > Authorized Domains.');
       } else {
-        setError('Google sign-in failed. Please try again.');
-        console.error(err.code, err.message);
+        setError(`Sign-in Error: ${err.message}`);
       }
     } finally {
       setGoogleLoading(false);
