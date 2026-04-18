@@ -14,13 +14,14 @@ const getGenAI = () => {
 
 const buildContextPrompt = (context: AIFinancialContext): string => {
   return `
-You are the **AI Agent Manager** — PacPay's dedicated financial advisor. You are professional, analytical, and focused exclusively on helping users manage their finances effectively.
+You are the **AI Agent Manager** for PacPay. Your mission is to provide professional, analytical advice on finance, markets, and budgeting.
 
-CRITICAL CONSTRAINT — STRICTLY ENFORCED:
-You MUST ONLY answer questions related to FINANCE, BUDGET, MONEY, SAVINGS, INVESTMENTS, DEBT, EXPENSES, INCOME, or FINANCIAL PLANNING.
-If the user asks ANYTHING outside of these topics (e.g., weather, jokes, sports, coding, general knowledge, recipes, entertainment, etc.), you MUST refuse. Respond with:
-"⚠️ That question falls outside my scope. I'm the AI Agent Manager — I exclusively handle finance, budget, and money-related queries. Please ask me about your savings, expenses, investments, or financial goals."
-Do NOT attempt to answer non-financial questions under any circumstances. Do NOT try to be helpful about off-topic queries. Simply refuse with the message above.
+CORE SCOPE:
+- You ONLY handle FINANCE, MONEY, STOCKS, BUDGETING, and SAVINGS.
+- Stocks, market prices, and future spending projections ARE your primary duties.
+- If a query is NOT about these topics (e.g. weather, jokes, general chat), professionally state that you only handle financial queries.
+
+User Financial Context:
 
 User Financial Profile:
 - Level: ${context.level}
@@ -53,13 +54,47 @@ Guidelines:
 `;
 };
 
+const OLLAMA_ENDPOINT = 'http://localhost:11434/api/chat';
+const LOCAL_MODEL = 'llama3.2:1b';
+
 export const generateAIResponse = async (
   userMessage: string,
   context: AIFinancialContext,
   conversationHistory: AIMessage[]
 ): Promise<string> => {
-  const ai = getGenAI();
+  // 1. Try Local Ollama First (Privacy & Speed)
+  try {
+    const systemPrompt = buildContextPrompt(context);
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory.slice(-6).map(m => ({ 
+        role: m.role === 'user' ? 'user' : 'assistant', 
+        content: m.content 
+      })),
+      { role: 'user', content: userMessage }
+    ];
 
+    const response = await fetch(OLLAMA_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: LOCAL_MODEL,
+        messages: messages,
+        stream: false,
+        options: { temperature: 0.7 }
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.message.content;
+    }
+  } catch (err) {
+    console.log('[AGENT_SYS] Local Link Unavailable. Switching to Cloud...');
+  }
+
+  // 2. Fallback to Gemini
+  const ai = getGenAI();
   if (!ai) {
     return generateFallbackResponse(userMessage, context);
   }
@@ -85,15 +120,48 @@ export const generateAIResponse = async (
 };
 
 export const generateInsights = async (context: AIFinancialContext): Promise<AIAdvice[]> => {
-  const ai = getGenAI();
+  // Try Ollama for insights too
+  try {
+    const prompt = `${buildContextPrompt(context)}
 
+Analyze the data and generate 3 personalized strategic insights. Format response as JSON:
+[
+  {
+    "type": "insight|suggestion|warning|celebration",
+    "title": "Short title",
+    "message": "Detailed strategic advice",
+    "priority": "low|medium|high"
+  }
+]
+`;
+
+    const response = await fetch(OLLAMA_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: LOCAL_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        stream: false,
+        format: 'json'
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const insights = JSON.parse(data.message.content);
+      return insights.map((i: AIAdvice) => ({ ...i, actionable: true }));
+    }
+  } catch (err) {
+    console.log('[AGENT_SYS] Local Analytics Unavailable. Switching to Cloud Diagnostics...');
+  }
+
+  const ai = getGenAI();
   if (!ai) {
     return generateFallbackInsights(context);
   }
 
   try {
     const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     const prompt = `${buildContextPrompt(context)}
 
 Analyze the data and generate 3 personalized strategic insights. Format response as JSON:
@@ -131,7 +199,8 @@ const generateFallbackResponse = (userMessage: string, context: AIFinancialConte
   const financeKeywords = [
     'money', 'finance', 'budget', 'spending', 'expense', 'saving', 'invest', 'stock', 'token', 
     'price', 'portfolio', 'asset', 'loan', 'debt', 'income', 'salary', 'tax', 'retirement', 
-    'bank', 'credit', 'rich', 'poor', 'cost', 'buy', 'sell', 'market', 'trade'
+    'bank', 'credit', 'rich', 'poor', 'cost', 'buy', 'sell', 'market', 'trade', 'future',
+    'forecast', 'plan', 'projection'
   ];
 
   const isFinanceRelated = financeKeywords.some(keyword => 
