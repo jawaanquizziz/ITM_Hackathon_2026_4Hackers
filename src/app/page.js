@@ -15,6 +15,7 @@ import {
   Target, 
   TrendingUp, 
   ShieldCheck,
+  ShieldAlert,
   Zap,
   User,
   History
@@ -72,7 +73,13 @@ export default function Dashboard() {
     // 1. Listen to User Profile
     const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
       if (doc.exists()) {
-        setUserData(prev => ({ ...prev, ...doc.data() }));
+        const data = doc.data();
+        setUserData(prev => ({ ...prev, ...data }));
+        
+        // AUTO-TRIGGER: If spent > 1000, trigger the animation!
+        if (data.spentThisWeek > 1000) {
+          router.push('/overspent');
+        }
       }
       setIsLoading(false);
     });
@@ -94,7 +101,7 @@ export default function Dashboard() {
       unsubUser();
       unsubTrans();
     };
-  }, [user]);
+  }, [user, router]);
 
   const handleAddMoney = async (amount) => {
     const res = await fetch('/api/payment', {
@@ -179,10 +186,19 @@ export default function Dashboard() {
           >
             QUICK DEPOSIT ₹1000
           </button>
-          <div className="flex -space-x-3">
+          
+          {/* DEMO TOOL: Trigger Animation */}
+          <button 
+            onClick={() => router.push('/overspent')}
+            className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-6 py-3 rounded-2xl font-black text-xs transition-all flex items-center gap-2 group"
+          >
+            <ShieldAlert size={14} className="group-hover:animate-pulse" />
+            SIMULATE OVERSPEND
+          </button>
+
+          <div className="hidden md:flex -space-x-3">
              <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-400">J</div>
              <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-400">K</div>
-             <div className="w-8 h-8 rounded-full border-2 border-zinc-900 bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-400">+4</div>
           </div>
         </div>
       </motion.div>

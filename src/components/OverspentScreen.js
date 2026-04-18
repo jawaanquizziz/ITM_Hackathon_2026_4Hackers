@@ -21,43 +21,54 @@ export default function OverspentScreen() {
 
   const startSequence = async () => {
     setAnimationStage('moving');
-    
     setEatenDots([]);
+    setLevel('Gold');
     
-    // Animate Pac-Man moving across the track
+    // 1. Move Pac-Man across the track eating coins
     controls.start({
-      x: ['0%', '100%'],
+      x: ['0%', '85%'],
       transition: { duration: MOVEMENT_DURATION, ease: 'linear' }
     });
 
     // Make dots disappear precisely when Pac-Man reaches them
     for (let i = 0; i < DOT_COUNT; i++) {
-      // Pac-Man travels from 0% to 100%. The dots container starts at 10% and spans 80%.
-      // We calculate the exact percentage where each dot is located.
       const positionPercentage = 0.1 + (0.8 / (DOT_COUNT - 1)) * i;
       const delayTime = MOVEMENT_DURATION * positionPercentage * 1000;
-      
-      setTimeout(() => {
-        setEatenDots(prev => [...prev, i]);
-      }, delayTime);
+      setTimeout(() => setEatenDots(prev => [...prev, i]), delayTime);
     }
 
     // Wait for movement to finish
     await new Promise(resolve => setTimeout(resolve, MOVEMENT_DURATION * 1000));
-    
+
+    // 2. The "Eating" Moment
     setAnimationStage('impact');
     
-    // Impact animation on the badge
-    await badgeControls.start({
-      x: [0, -10, 10, -10, 10, 0],
-      scale: [1, 1.2, 0.9, 1.1, 1],
-      rotate: [0, -15, 15, -15, 15, 0],
-      transition: { duration: 0.5 }
+    // Pac-Man lunges at the badge
+    controls.start({
+      x: ['85%', '95%', '85%'],
+      scale: [1, 1.3, 1],
+      transition: { duration: 0.4 }
     });
 
-    // Crack and downgrade
+    // Badge gets "swallowed" (shrinks to 0)
+    await badgeControls.start({
+      scale: [1, 1.2, 0],
+      rotate: [0, 45, 180],
+      opacity: [1, 1, 0],
+      transition: { duration: 0.4 }
+    });
+
+    // 3. Digestion / Downgrade
     setAnimationStage('downgraded');
     setLevel('Silver');
+
+    // New badge "pops" back out
+    await badgeControls.start({
+      scale: [0, 1.5, 1],
+      opacity: [0, 1, 1],
+      rotate: [180, -10, 0],
+      transition: { type: 'spring', stiffness: 200, damping: 12 }
+    });
   };
 
   return (
