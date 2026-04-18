@@ -111,21 +111,27 @@ export default function InsightsPage() {
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full flex flex-col items-center pb-20">
       
-      <div className="w-full bg-black/40 p-5 md:p-8 rounded-[2rem] border border-zinc-800 relative overflow-hidden flex flex-col items-center text-center">
+      {/* Featured Action Station HUD */}
+      <div className="w-full bg-[#0a0a0a] border-4 border-zinc-800 rounded-[2.5rem] p-6 md:p-10 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-pac-blue)] to-transparent opacity-50"></div>
-        <div className="flex items-center gap-4 mb-2">
-           <h1 className="text-xl md:text-3xl font-black font-heading text-white tracking-tighter">
-              STATS <span className="text-[var(--color-pac-blue)]">&amp; DATA</span>
+        
+        <div className="flex flex-col items-center md:items-start text-center md:text-left gap-2 relative z-10">
+           <h1 className="text-3xl md:text-5xl font-black font-heading text-white tracking-tighter italic uppercase">
+              DATA <span className="text-[var(--color-pac-blue)]">COMMAND</span>
            </h1>
-           <button 
-              onClick={() => setIsModalOpen(true)}
-              className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[var(--color-pac-yellow)] text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg"
-              title="Add Transaction"
-           >
-              <Plus size={20} strokeWidth={3} />
-           </button>
+           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> SYSTEM_LIVE // LOG_SESSIONS
+           </p>
         </div>
-        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">Real-time Performance Metrics</p>
+
+        <button 
+           onClick={() => setIsModalOpen(true)}
+           className="w-full md:w-auto bg-[var(--color-pac-yellow)] hover:bg-yellow-400 text-black px-8 py-5 rounded-[2rem] font-black text-xs transition-all flex items-center justify-center gap-4 shadow-[0_0_30px_rgba(250,204,21,0.3)] hover:scale-105 active:scale-95 group relative overflow-hidden"
+        >
+           <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+           <Plus size={20} strokeWidth={4} />
+           <span>ADD EXPENSES</span>
+        </button>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6 w-full">

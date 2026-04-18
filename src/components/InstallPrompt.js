@@ -14,8 +14,12 @@ export default function InstallPrompt() {
       e.preventDefault();
       // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Show our custom install banner automatically as requested
-      setShowPrompt(true);
+      
+      // ONLY show if not previously dismissed in this session
+      const isDismissed = localStorage.getItem('pacpay_install_dismissed');
+      if (!isDismissed) {
+        setShowPrompt(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -76,7 +80,10 @@ export default function InstallPrompt() {
                INSTALL
              </button>
              <button 
-               onClick={() => setShowPrompt(false)}
+               onClick={() => {
+                 setShowPrompt(false);
+                 localStorage.setItem('pacpay_install_dismissed', 'true');
+               }}
                className="p-2 text-zinc-400 hover:text-white transition"
              >
                <X size={16} />

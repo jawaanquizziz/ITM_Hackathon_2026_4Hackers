@@ -192,8 +192,8 @@ export function BottomNavigation() {
            </Link>
         </div>
 
+        <NavItem href="/store" icon={Store} label="Store" active={pathname === '/store'} />
         <NavItem href="/leaderboard" icon={Trophy} label="Ranking" active={pathname === '/leaderboard'} />
-        <NavItem href="/debts" icon={Users} label="Debts" active={pathname === '/debts'} />
       </div>
     </div>
   );
