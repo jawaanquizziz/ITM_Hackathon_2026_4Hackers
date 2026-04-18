@@ -1,17 +1,20 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, LineChart, Target, Gift, User, Bell, Settings, Store } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, LineChart, Target, Gift, User, Bell, Settings, Store, LogOut } from 'lucide-react';
 import { auth, db } from '@/firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { signOut } from 'firebase/auth';
 
 export function TopNavbar() {
   const pathname = usePathname();
   const [userData, setUserData] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { push } = useRouter();
   
   useEffect(() => {
     if (!auth) {
@@ -71,12 +74,45 @@ export function TopNavbar() {
               <Bell size={20} className="text-zinc-400" />
               <div className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#050505]"></div>
             </button>
-            <Link href="/profile" className="flex items-center space-x-2 py-1.5 pl-3 pr-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 transition shadow-inner">
-              <span className="text-xs font-bold pr-1 text-zinc-200">{userData?.name?.split(' ')[0] || 'Player'}</span>
-              <div className="w-7 h-7 rounded-full bg-[var(--color-pac-blue)] flex items-center justify-center shadow-lg">
-                <User size={14} className="text-white" />
-              </div>
-            </Link>
+            <div className="relative">
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center space-x-2 py-1.5 pl-3 pr-1.5 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 transition shadow-inner"
+              >
+                <span className="text-xs font-bold pr-1 text-zinc-200">{userData?.name?.split(' ')[0] || 'Player'}</span>
+                <div className="w-7 h-7 rounded-full bg-[var(--color-pac-blue)] flex items-center justify-center shadow-lg">
+                  <User size={14} className="text-white" />
+                </div>
+              </button>
+              
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-2">
+                  <button 
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      push('/profile');
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white transition flex items-center gap-2"
+                  >
+                    <User size={16} /> View Profile
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      setIsProfileOpen(false);
+                      try {
+                        await signOut(auth);
+                        push('/login');
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-rose-400 hover:bg-zinc-800 hover:text-rose-300 transition flex items-center gap-2"
+                  >
+                    <LogOut size={16} /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           
         </div>

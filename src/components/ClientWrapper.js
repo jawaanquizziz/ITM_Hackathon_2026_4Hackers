@@ -12,6 +12,7 @@ import { FAB } from './FAB';
 export default function ClientWrapper({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthVerified, setIsAuthVerified] = useState(false);
+  const [user, setUser] = useState(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -28,17 +29,13 @@ export default function ClientWrapper({ children }) {
       return () => clearTimeout(timer);
     }
 
-    // Force sign out on initial load for demo purposes so it always shows the login screen
-    if (auth) {
-      signOut(auth).catch(console.error);
-    }
-
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, (currentUser) => {
       setIsAuthVerified(true);
+      setUser(currentUser);
       
       // If we are verified and on a protected route while logged out, redirect
       const isAuthRoute = pathname === '/login' || pathname === '/register';
-      if (!user && !isAuthRoute) {
+      if (!currentUser && !isAuthRoute) {
         router.push('/login');
       }
     });
@@ -63,7 +60,7 @@ export default function ClientWrapper({ children }) {
           <TopNavbar />
           
           <main className="flex-1 pb-24 md:pb-12 pt-6 md:pt-28 px-4 w-full max-w-lg md:max-w-6xl mx-auto flex flex-col relative z-10 transition-all duration-500">
-            {children}
+            {(!user && !(pathname === '/login' || pathname === '/register')) ? null : children}
           </main>
 
           <FAB />
