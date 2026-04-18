@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/firebase/config';
 import { usePathname, useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
 import SplashScreen from './SplashScreen';
 import { TopNavbar, BottomNavigation } from './Navigation';
 import { FAB } from './FAB';
@@ -25,6 +26,11 @@ export default function ClientWrapper({ children }) {
       console.warn("Auth not configured. Bypassing check.");
       setIsAuthVerified(true);
       return () => clearTimeout(timer);
+    }
+
+    // Force sign out on initial load for demo purposes so it always shows the login screen
+    if (auth) {
+      signOut(auth).catch(console.error);
     }
 
     const unsub = onAuthStateChanged(auth, (user) => {
