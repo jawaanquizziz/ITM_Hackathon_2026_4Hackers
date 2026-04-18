@@ -5,9 +5,43 @@ import { useRouter } from 'next/navigation';
 import { ShieldCheck, User, MapPin, Briefcase, Eye, EyeOff } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { auth, db } from '@/firebase/config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { 
+  createUserWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
+  browserPopupRedirectResolver 
+} from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { generateReferralCode, processReferralBonus } from '@/services/transactionService';
+
+// Helper to create/get a user vault in Firestore after Google Sign-In
+async function ensureRegisterVault(user, db) {
+  if (!db) return;
+  const docRef = doc(db, 'users', user.uid);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) {
+    await setDoc(docRef, {
+      name: user.displayName || 'Arcade Player',
+      email: user.email,
+      phone: user.phoneNumber || '',
+      dob: '',
+      pan: 'GOOGLE_AUTH',
+      aadhar: 'GOOGLE_AUTH',
+      address: '',
+      state: '',
+      zip: '',
+      employment: 'Salaried',
+      income: '',
+      balance: 0,
+      xp: 0,
+      level: 1,
+      referralCode: generateReferralCode(user.displayName),
+      createdAt: serverTimestamp(),
+    });
+  }
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,6 +53,29 @@ export default function RegisterPage() {
     employment: 'Salaried', income: '',
     referralCodeInput: ''
   });
+
+  // Handle Redirect Result on Mount
+  useEffect(() => {
+    if (!auth || !db) return;
+    
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          console.log('Register Redirect Success:', result.user.email);
+          await ensureRegisterVault(result.user, db);
+          router.replace('/');
+        }
+      } catch (err) {
+        console.error('Register Redirect Error:', err.code, err.message);
+        if (err.code === 'auth/unauthorized-domain' || err.code === 'auth/operation-not-allowed') {
+          setError(`Vercel Config Error: ${err.message}`);
+        }
+      }
+    };
+    
+    checkRedirect();
+  }, [auth, db, router]);
 
   const handleChange = (e) => {
     let { name, value } = e.target;
@@ -101,51 +158,41 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleRegister = async () => {
+   const handleGoogleRegister = async () => {
     setIsLoading(true);
     setError('');
 
-    if (!auth || !db) {
-      console.warn("Firebase not configured. Entering Demo Mode.");
-      setTimeout(() => router.push('/'), 800);
-      return;
-    }
-
     try {
+      if (!auth || !db) throw new Error('Firebase configuration missing in .env.local');
+      
       const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
-
-      // Check if user already has a vault to avoid overwriting existing data
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        // Initialize basic vault
-        await setDoc(docRef, {
-          name: user.displayName || "Arcade Player",
-          email: user.email,
-          phone: user.phoneNumber || "",
-          dob: "",
-          pan: "GOOGLE_AUTH",
-          aadhar: "GOOGLE_AUTH",
-          address: "",
-          state: "",
-          zip: "",
-          employment: "Salaried",
-          income: "",
-          balance: 0,
-          xp: 0,
-          level: 1,
-          referralCode: generateReferralCode(user.displayName),
-          createdAt: serverTimestamp()
-        });
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      // Attempt Popup first
+      try {
+        const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+        await ensureRegisterVault(result.user, db);
+        router.replace('/');
+      } catch (popupErr) {
+        // If popup is blocked or fails on mobile, try Redirect
+        if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request') {
+          console.log('Register Popup failed/blocked, attempting redirect flow...');
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw popupErr;
+        }
       }
-
-      router.push('/');
     } catch (err) {
-      console.error(err);
-      setError("Google Registration failed.");
+      console.error('Final Register Auth Error:', err.code, err.message);
+      
+      if (err.code === 'auth/operation-not-allowed') {
+        setError('Google Sign-In is not enabled in Firebase Console.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('This domain is not authorized in Firebase Console.');
+      } else {
+        setError(`Auth Error: ${err.message}`);
+      }
     } finally {
       setIsLoading(false);
     }

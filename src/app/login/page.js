@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, db } from '@/firebase/config';
 import { 
@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   signInWithRedirect,
+  getRedirectResult,
   browserPopupRedirectResolver 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -49,6 +50,29 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
+
+  // Handle Redirect Result on Mount
+  useEffect(() => {
+    if (!auth) return;
+    
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          console.log('Redirect Login Success:', result.user.email);
+          await ensureUserVault(result.user);
+          router.replace('/');
+        }
+      } catch (err) {
+        console.error('Redirect Processing Error:', err.code, err.message);
+        if (err.code === 'auth/unauthorized-domain' || err.code === 'auth/operation-not-allowed') {
+          setError(`Vercel Config Error: ${err.message}`);
+        }
+      }
+    };
+    
+    checkRedirect();
+  }, [auth, router]);
 
   // ── Email / Password Sign-In ──────────────────────────────────────────────
   const handleLogin = async (e) => {
@@ -127,7 +151,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-[var(--color-pac-yellow)] flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.4)] mb-4">
             <svg width="28" height="28" viewBox="0 0 100 100">
-              <path fill="black" d="M 50 50 L 85.35 14.65 A 50 50 0 1 0 85.35 85.35 Z" />
+              <path fill="black" d="M 50 50 L 100 50 A 50 50 0 1 1 50 0 L 50 50 Z" />
             </svg>
           </div>
           <h1 className="text-2xl font-black font-heading text-white tracking-tight">Welcome Back</h1>

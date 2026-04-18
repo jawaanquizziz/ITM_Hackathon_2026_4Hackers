@@ -3,12 +3,12 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBddCZn6vxtK_vcG0jJCMao8ZAU-j5nckA",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "pacpay-b0324.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "pacpay-b0324",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "pacpay-b0324.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "232782131024",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:232782131024:web:122447dad9f3b5f5b34655",
 };
 
 // ─── ENVIRONMENT DIAGNOSTICS ───────────────────────────────────
@@ -23,7 +23,7 @@ const getFirebaseStatus = () => {
     console.table({ 'Vault_Security_Link': config });
   }
   
-  return Object.values(config).every(v => v === true);
+  return true; // Bypass env check because we have hardcoded fallback
 };
 
 const isConfigured = getFirebaseStatus();
