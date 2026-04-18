@@ -12,11 +12,9 @@ const firebaseConfig = {
 };
 
 const PLACEHOLDER = 'your_api_key_here';
-const isConfigured =
-  firebaseConfig.apiKey &&
-  firebaseConfig.apiKey !== PLACEHOLDER &&
-  firebaseConfig.projectId &&
-  firebaseConfig.projectId !== PLACEHOLDER;
+const isConfigured = 
+  !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== PLACEHOLDER;
 
 let app = null;
 let auth = null;
@@ -24,18 +22,26 @@ let db = null;
 
 if (isConfigured) {
   try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    const apps = getApps();
+    app = !apps.length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
-    console.log('✅ Firebase initialized successfully.');
+    
+    if (typeof window !== 'undefined') {
+      console.log('✅ Firebase Vault Link Established.');
+    }
   } catch (error) {
-    console.error('❌ Firebase initialization failed:', error.message);
+    if (typeof window !== 'undefined') {
+      console.error('❌ Firebase Vault Link Failed:', error.message);
+    }
     app = null;
     auth = null;
     db = null;
   }
 } else {
-  console.warn('⚠️ Firebase env vars missing or are placeholders. Running in Demo Mode.');
+  if (typeof window !== 'undefined') {
+    console.warn('⚠️ Firebase Credentials Missing. Running in Local Demo Mode.');
+  }
 }
 
 export { app, auth, db };
