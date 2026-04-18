@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, User, MapPin, Briefcase } from 'lucide-react';
+import { ShieldCheck, User, MapPin, Briefcase, Eye, EyeOff } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { auth, db } from '@/firebase/config';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -21,7 +21,16 @@ export default function RegisterPage() {
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+    
+    // Restrictions
+    if (name === 'name') {
+      value = value.replace(/[^a-zA-Z\s]/g, ''); // Only letters and spaces
+    } else if (name === 'phone' || name === 'ssn' || name === 'zip') {
+      value = value.replace(/[^\d]/g, ''); // Only numbers
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const validate = () => {
@@ -303,15 +312,30 @@ export default function RegisterPage() {
 }
 
 // Reusable Input Component
-function FormInput({ label, onChange, ...props }) {
+function FormInput({ label, onChange, type = "text", ...props }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+
   return (
-    <div>
+    <div className="relative">
       <label className="block text-[10px] font-semibold text-zinc-400 mb-1">{label}</label>
-      <input 
-        {...props}
-        onChange={onChange}
-        className="w-full bg-[#121212] border border-zinc-800 focus:border-zinc-600 rounded-lg py-2 px-3 text-xs font-medium text-white outline-none transition-all placeholder:text-zinc-600 focus:bg-zinc-900/50"
-      />
+      <div className="relative">
+        <input 
+          {...props}
+          type={isPassword ? (showPassword ? "text" : "password") : type}
+          onChange={onChange}
+          className="w-full bg-[#121212] border border-zinc-800 focus:border-zinc-600 rounded-lg py-2 px-3 text-xs font-medium text-white outline-none transition-all placeholder:text-zinc-600 focus:bg-zinc-900/50 pr-10"
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+          >
+            {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

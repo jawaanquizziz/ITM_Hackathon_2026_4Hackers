@@ -11,10 +11,22 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const PLACEHOLDER = 'your_api_key_here';
-const isConfigured = 
-  !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== PLACEHOLDER;
+// ─── ENVIRONMENT DIAGNOSTICS ───────────────────────────────────
+const getFirebaseStatus = () => {
+  const config = {
+    apiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: !!process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  };
+  
+  if (typeof window !== 'undefined') {
+    console.table({ 'Vault_Security_Link': config });
+  }
+  
+  return Object.values(config).every(v => v === true);
+};
+
+const isConfigured = getFirebaseStatus();
 
 let app = null;
 let auth = null;
@@ -28,19 +40,16 @@ if (isConfigured) {
     db = getFirestore(app);
     
     if (typeof window !== 'undefined') {
-      console.log('✅ Firebase Vault Link Established.');
+      console.log('✅ PacPay Vault: Link Secure');
     }
   } catch (error) {
     if (typeof window !== 'undefined') {
-      console.error('❌ Firebase Vault Link Failed:', error.message);
+      console.error('❌ PacPay Vault: Link Interrupted ->', error.message);
     }
-    app = null;
-    auth = null;
-    db = null;
   }
 } else {
   if (typeof window !== 'undefined') {
-    console.warn('⚠️ Firebase Credentials Missing. Running in Local Demo Mode.');
+    console.warn('⚠️ PacPay Vault: Running in Local Offline Mode (Env Vars Missing)');
   }
 }
 
