@@ -4,8 +4,13 @@ import crypto from 'crypto';
 
 // Initialize Razorpay lazily inside the handler to prevent build-time crashes
 export async function POST(req) {
-  const RAZORPAY_KEY = process.env.RAZORPAY_KEY_ID || '';
-  const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
+  const RAZORPAY_KEY = process.env.RAZORPAY_KEY_ID;
+  const RAZORPAY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!RAZORPAY_KEY || !RAZORPAY_SECRET) {
+    console.error("RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET is missing from .env.local");
+    return NextResponse.json({ error: "Payments are not configured on this environment." }, { status: 500 });
+  }
 
   const razorpay = new Razorpay({
     key_id: RAZORPAY_KEY,
