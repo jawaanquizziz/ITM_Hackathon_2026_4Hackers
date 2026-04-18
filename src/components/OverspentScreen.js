@@ -12,6 +12,16 @@ export default function OverspentScreen() {
   const badgeControls = useAnimation();
 
   const DOT_COUNT = 10;
+  const [isChomped, setIsChomped] = useState(false);
+
+  // Rapid chomp like SplashScreen
+  useEffect(() => {
+    const chompInterval = setInterval(() => {
+      setIsChomped(prev => !prev);
+    }, 120);
+    return () => clearInterval(chompInterval);
+  }, []);
+
   const MOVEMENT_DURATION = 2.5;
 
   // Start animation automatically for demo
@@ -141,26 +151,25 @@ export default function OverspentScreen() {
             ))}
           </div>
 
-          {/* Pac-Man Character */}
+          {/* Pac-Man Character (MATCHES SPLASH SCREEN) */}
           <motion.div 
             animate={controls}
             className="absolute left-0 -ml-5 z-20 flex items-center justify-center"
-            style={{ width: 'calc(100% - 2.5rem)' }} // Account for badge at the end
+            style={{ width: 'calc(100% - 2.5rem)' }} 
           >
-            <div className="relative w-12 h-12">
-              <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_12px_rgba(250,204,21,0.7)]">
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              {/* Ambient Yellow Glow */}
+              <div className="absolute inset-0 bg-[#FACC15] blur-[15px] opacity-40 rounded-full"></div>
+              
+              <svg width="48" height="48" viewBox="0 0 100 100" className="relative z-10 drop-shadow-[0_0_10px_rgba(250,204,21,0.6)]">
                 <motion.path
-                  fill="#facc15"
-                  animate={{ 
-                    d: animationStage === 'moving' 
-                      ? [
-                          "M 50 50 L 100 50 A 50 50 0 1 1 100 50 Z", // Closed
-                          "M 50 50 L 92 20 A 50 50 0 1 1 92 80 Z",  // Wide Open
-                          "M 50 50 L 100 50 A 50 50 0 1 1 100 50 Z"  // Closed
-                        ]
-                      : "M 50 50 L 92 20 A 50 50 0 1 1 92 80 Z"
+                  fill="#FACC15"
+                  animate={{
+                    d: isChomped 
+                      ? "M 50 50 L 100 49 A 50 50 0 1 0 100 51 Z" 
+                      : "M 50 50 L 85.35 14.65 A 50 50 0 1 0 85.35 85.35 Z"
                   }}
-                  transition={{ repeat: Infinity, duration: 0.25, ease: "easeInOut" }}
+                  transition={{ duration: 0.12 }}
                 />
               </svg>
             </div>
