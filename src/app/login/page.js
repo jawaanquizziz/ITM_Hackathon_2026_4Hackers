@@ -21,6 +21,12 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
 
+    if (!auth) {
+      console.warn("Firebase Auth not configured. Entering Demo Mode.");
+      setTimeout(() => router.push('/'), 500);
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
@@ -35,35 +41,44 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError('');
+
+    if (!auth) {
+      console.warn("Firebase Auth not configured. Entering Demo Mode.");
+      setTimeout(() => router.push('/'), 500);
+      return;
+    }
+
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       const user = userCredential.user;
 
-      // Check if user already has a vault
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
+      if (db) {
+        // Check if user already has a vault
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
 
-      if (!docSnap.exists()) {
-        // Initialize basic vault for first-time Google sign-in
-        await setDoc(docRef, {
-          name: user.displayName || "Arcade Player",
-          email: user.email,
-          phone: user.phoneNumber || "",
-          dob: "",
-          pan: "GOOGLE_AUTH",
-          aadhar: "GOOGLE_AUTH",
-          address: "",
-          state: "",
-          zip: "",
-          employment: "Salaried",
-          income: "",
-          balance: 0,
-          xp: 0,
-          level: 1,
-          referralCode: generateReferralCode(user.displayName),
-          createdAt: serverTimestamp()
-        });
+        if (!docSnap.exists()) {
+          // Initialize basic vault for first-time Google sign-in
+          await setDoc(docRef, {
+            name: user.displayName || "Arcade Player",
+            email: user.email,
+            phone: user.phoneNumber || "",
+            dob: "",
+            pan: "GOOGLE_AUTH",
+            aadhar: "GOOGLE_AUTH",
+            address: "",
+            state: "",
+            zip: "",
+            employment: "Salaried",
+            income: "",
+            balance: 0,
+            xp: 0,
+            level: 1,
+            referralCode: generateReferralCode(user.displayName),
+            createdAt: serverTimestamp()
+          });
+        }
       }
 
       router.push('/');

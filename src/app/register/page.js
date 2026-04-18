@@ -46,6 +46,13 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
+
+    if (!auth || !db) {
+      console.warn("Firebase not configured. Entering Demo Mode.");
+      setTimeout(() => router.push('/'), 800);
+      return;
+    }
+
     try {
       // 1. Create Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
@@ -88,6 +95,13 @@ export default function RegisterPage() {
   const handleGoogleRegister = async () => {
     setIsLoading(true);
     setError('');
+
+    if (!auth || !db) {
+      console.warn("Firebase not configured. Entering Demo Mode.");
+      setTimeout(() => router.push('/'), 800);
+      return;
+    }
+
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
