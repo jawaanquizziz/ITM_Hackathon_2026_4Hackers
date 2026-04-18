@@ -67,7 +67,7 @@ export default function OverspentScreen() {
       scale: [0, 1.5, 1],
       opacity: [0, 1, 1],
       rotate: [180, -10, 0],
-      transition: { type: 'spring', stiffness: 200, damping: 12 }
+      transition: { duration: 0.8, ease: "easeOut" }
     });
   };
 
