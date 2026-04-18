@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Large assets and legacy design files
+*.zip
+/cyberpunk_arena/
+/pacman_theme/
+legacy_cra
