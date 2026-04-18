@@ -8,29 +8,34 @@ const firebaseConfig = {
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase only if API key is present and not the placeholder
-const isConfigured = 
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY && 
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'your_api_key_here';
+const PLACEHOLDER = 'your_api_key_here';
+const isConfigured =
+  firebaseConfig.apiKey &&
+  firebaseConfig.apiKey !== PLACEHOLDER &&
+  firebaseConfig.projectId &&
+  firebaseConfig.projectId !== PLACEHOLDER;
 
-let app, auth, db;
+let app = null;
+let auth = null;
+let db = null;
 
 if (isConfigured) {
   try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     db = getFirestore(app);
+    console.log('✅ Firebase initialized successfully.');
   } catch (error) {
-    console.error("Firebase initialization failed:", error);
+    console.error('❌ Firebase initialization failed:', error.message);
+    app = null;
+    auth = null;
+    db = null;
   }
 } else {
-  console.warn("Firebase is not configured. Using null for auth and db.");
-  app = null;
-  auth = null;
-  db = null;
+  console.warn('⚠️ Firebase env vars missing or are placeholders. Running in Demo Mode.');
 }
 
 export { app, auth, db };
