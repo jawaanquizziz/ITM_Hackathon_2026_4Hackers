@@ -180,22 +180,19 @@ export function BottomNavigation() {
   if (pathname === '/login' || pathname === '/register') return null;
 
   return (
-    <div className="fixed bottom-0 w-full glass-nav border-t border-zinc-800 z-50 md:hidden pb-safe shadow-lg">
-      <div className="flex justify-between items-center px-6 py-2">
+    <div className="fixed bottom-0 w-full glass-nav border-t border-zinc-800 z-50 md:hidden pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+      <div className="flex justify-around items-center h-16 relative">
         <NavItem href="/" icon={Home} label="Home" active={pathname === '/'} />
         <NavItem href="/insights" icon={LineChart} label="Insights" active={pathname === '/insights'} />
         
-        {/* Floating Profile Button for Mobile */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-6">
-           <Link href="/profile" className={`w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.3)] border-4 border-[#050505] transition-transform active:scale-90 ${pathname === '/profile' ? 'bg-[var(--color-pac-yellow)] text-black' : 'bg-zinc-900 text-[var(--color-pac-yellow)]'}`}>
+        {/* Floating Profile Button - Centered */}
+        <div className="relative -top-5 z-[60]">
+           <Link href="/profile" className={`w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.3)] border-4 border-[#050505] transition-transform active:scale-95 ${pathname === '/profile' ? 'bg-[var(--color-pac-yellow)] text-black' : 'bg-zinc-900 text-[var(--color-pac-yellow)]'}`}>
               <User size={24} strokeWidth={3} />
            </Link>
         </div>
 
-        <div className="w-16"></div>
-
-        <NavItem href="/store" icon={Store} label="Store" active={pathname === '/store'} />
-        <NavItem href="/leaderboard" icon={Trophy} label="Rankings" active={pathname === '/leaderboard'} />
+        <NavItem href="/leaderboard" icon={Trophy} label="Ranking" active={pathname === '/leaderboard'} />
         <NavItem href="/debts" icon={Users} label="Debts" active={pathname === '/debts'} />
       </div>
     </div>
@@ -207,8 +204,8 @@ function NavItem({ href, icon: Icon, label, active, desktop = false }) {
     <Link 
       href={href}
       className={twMerge(
-        "flex flex-col items-center justify-center gap-1 transition-all relative group",
-        desktop ? "flex-row gap-2 py-2" : "w-14 h-12 mt-1",
+        "flex flex-col items-center justify-center transition-all relative group",
+        desktop ? "flex-row gap-2 py-2" : "flex-1 h-full min-w-[60px]",
         active ? "text-[var(--color-pac-yellow)]" : "text-zinc-500 hover:text-white"
       )}
     >
@@ -217,8 +214,8 @@ function NavItem({ href, icon: Icon, label, active, desktop = false }) {
         strokeWidth={active ? 2.5 : 2} 
       />
       <span className={clsx(
-         "text-[10px] font-medium tracking-wide", 
-         desktop ? "text-sm font-medium" : ""
+         "text-[9px] font-bold tracking-tight whitespace-nowrap", 
+         desktop ? "text-sm font-medium tracking-wide" : ""
       )}>
         {label}
       </span>

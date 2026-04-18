@@ -1,25 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --color-pac-yellow: #facc15;
   --color-pac-blue: #0ea5e9;
-  --color-pac-bg: #050505; /* Deep rich black */
+  --color-pac-bg: #050505;
   --color-pac-surface: #121212;
-  --color-pac-border: #27272a; /* Neutral zinc border */
+  --color-pac-border: #27272a;
 }
 
 @layer base {
   :root {
-    --background: var(--color-pac-bg);
-    --foreground: #ffffff;
+    --font-heading: 'Space Grotesk', sans-serif;
   }
   
   html, body {
-    @apply antialiased bg-[var(--background)] text-[var(--foreground)] min-h-screen w-full overflow-x-hidden;
-    /* Soft premium dark gradient */
+    @apply antialiased bg-[#050505] text-white min-h-screen w-full overflow-x-hidden;
+    font-family: var(--font-heading);
     background: radial-gradient(circle at top right, #111827, #050505);
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
 }
+
+.font-heading { font-family: 'Space Grotesk', sans-serif; }
+.font-arcade { font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; }
 
 /* Glassmorphism Classes (Professional) */
 .glass-nav {

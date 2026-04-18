@@ -96,23 +96,47 @@ export async function atomicTransaction(userId, data) {
     await runTransaction(db, async (transaction) => {
       const userDoc = await transaction.get(userRef);
       
-      // If user doesn't exist, initialize them (common for new players)
       if (!userDoc.exists()) {
+        const initialBalance = type === 'credit' ? amount : 0;
         transaction.set(userRef, {
-          balance: type === 'credit' ? amount : 0,
-          xp: 100,
+          name: 'Arcade Player',
+          balance: initialBalance,
+          xp: type === 'credit' ? 20 : 50,
           level: 1,
+          spentThisWeek: type === 'debit' ? amount : 0,
           createdAt: serverTimestamp()
         });
       } else {
-        const newBalance = type === 'credit' 
-          ? (userDoc.data().balance || 0) + amount 
-          : (userDoc.data().balance || 0) - amount;
-        
-        transaction.update(userRef, { balance: Math.max(0, newBalance) });
+        const currentData = userDoc.data();
+        let newBalance = currentData.balance || 0;
+        let newXP = currentData.xp || 0;
+        let newLevel = currentData.level || 1;
+        let newSpent = currentData.spentThisWeek || 0;
+
+        // 1. Math for Balance
+        if (type === 'credit') {
+          newBalance += amount;
+          newXP += 20; // 20 XP for deposit
+        } else {
+          newBalance -= amount;
+          newXP += 50; // 50 XP for spending
+          newSpent += amount;
+        }
+
+        // 2. Level Up Logic (500 XP per level)
+        if (newXP >= newLevel * 500) {
+          newLevel += 1;
+        }
+
+        transaction.update(userRef, { 
+          balance: Math.max(0, newBalance),
+          xp: newXP,
+          level: newLevel,
+          spentThisWeek: newSpent
+        });
       }
 
-      // Add the history record
+      // 3. Add History Log
       const newTransRef = doc(transCollection);
       transaction.set(newTransRef, {
         userId,
@@ -126,7 +150,7 @@ export async function atomicTransaction(userId, data) {
     
     return { success: true };
   } catch (e) {
-    console.error("Transaction failed: ", e);
+    console.error("Atomic Transaction Failed: ", e);
     return { success: false, error: e.message };
   }
 }

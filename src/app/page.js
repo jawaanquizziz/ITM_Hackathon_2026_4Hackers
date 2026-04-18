@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ArcadePreview from '@/components/ArcadePreview';
+import AddTransactionModal from '@/components/AddTransactionModal';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,7 @@ export default function Dashboard() {
 
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -255,7 +257,7 @@ export default function Dashboard() {
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">Safe Savings</p>
               <div className="flex items-center gap-2">
                  <ArrowUpRight size={16} className="text-emerald-400" />
-                 <span className="text-xl font-black text-white">₹450</span>
+                 <span className="text-xl font-black text-white">₹{Math.floor((userData.balance || 0) * 0.3).toLocaleString()}</span>
               </div>
            </div>
         </div>
@@ -395,10 +397,11 @@ export default function Dashboard() {
             onClick={() => router.push('/profile')}
          />
          <ActionTile 
-            icon={<TrendingUp size={24}/>} 
-            title="Arcade Stats" 
-            desc="View XP History" 
+            icon={<Plus size={24}/>} 
+            title="Add Activity" 
+            desc="Manual Session Log" 
             color="border-emerald-500/20 text-emerald-400" 
+            onClick={() => setIsModalOpen(true)}
          />
          <div className="col-span-2 flex flex-col justify-center relative group overflow-hidden bg-gradient-to-r from-[var(--color-pac-yellow)] to-orange-400 rounded-[2rem] p-6 shadow-xl cursor-pointer active:scale-[0.98] transition-all"
               onClick={() => handleAddMoney(500)}>
@@ -485,6 +488,11 @@ export default function Dashboard() {
       </motion.div>
       </motion.div>
 
+      <AddTransactionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        userId={user?.uid} 
+      />
     </div>
   );
 }

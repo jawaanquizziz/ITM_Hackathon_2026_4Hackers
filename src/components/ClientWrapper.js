@@ -16,7 +16,7 @@ const SPLASH_DURATION = 2800;
 export default function ClientWrapper({ children }) {
   const [splashDone, setSplashDone] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(null); // Unknown, LoggedIn (true), or LoggedOut (false)
   const router = useRouter();
   const pathname = usePathname();
 
@@ -29,20 +29,13 @@ export default function ClientWrapper({ children }) {
   // 2. Auth Context Integration
   useEffect(() => {
     const handleInitialAuth = async () => {
+      // Just check if auth is available, don't force logout
       if (!auth) {
         setIsLoggedIn(false);
         setAuthChecked(true);
         return;
       }
-
-      // Proactive force-logout to ensure Login screen is always the mandatory portal
-      try {
-        await signOut(auth);
-      } catch (err) {
-        console.error("Auth Reset Failed:", err);
-      }
       
-      setIsLoggedIn(false);
       setAuthChecked(true);
     };
 
@@ -62,7 +55,7 @@ export default function ClientWrapper({ children }) {
 
   // 3. Routing Guard
   useEffect(() => {
-    if (!splashDone || !authChecked) return;
+    if (!splashDone || !authChecked || isLoggedIn === null) return;
 
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
 
@@ -75,7 +68,7 @@ export default function ClientWrapper({ children }) {
 
   // ─── RENDERING LOGIC ───────────────────────────────────────────
 
-  const showSplash = !splashDone || !authChecked;
+  const showSplash = !splashDone || !authChecked || isLoggedIn === null;
 
   // Level 1: Splash Screen (Always first)
   if (showSplash) {

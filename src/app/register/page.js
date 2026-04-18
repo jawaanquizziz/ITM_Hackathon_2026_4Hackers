@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, User, MapPin, Briefcase, Eye, EyeOff } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
