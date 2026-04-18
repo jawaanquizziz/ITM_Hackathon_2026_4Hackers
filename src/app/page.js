@@ -122,7 +122,16 @@ export default function Dashboard() {
     };
   }, [user, router]);
 
+  const [showRefillAnimation, setShowRefillAnimation] = useState(false);
+  
   const handleAddMoney = async (amount) => {
+    // FASCINATING ADDITION: Jackpot Sequence
+    setShowRefillAnimation(true);
+    setTimeout(() => setShowRefillAnimation(false), 2000);
+
+    // Wait for the initial "Burst" to feel the impact
+    await new Promise(r => setTimeout(r, 600));
+
     const res = await fetch('/api/payment', {
       method: 'POST',
       body: JSON.stringify({ action: 'create_order', amount })
@@ -499,6 +508,54 @@ export default function Dashboard() {
         onClose={() => setIsModalOpen(false)} 
         userId={user?.uid} 
       />
+
+      {/* JACKPOT ANIMATION OVERLAY */}
+      <AnimatePresence>
+        {showRefillAnimation && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] pointer-events-none flex items-center justify-center overflow-hidden"
+          >
+            <motion.div 
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: [1, 2, 1.5], opacity: [0, 0.8, 0] }}
+              transition={{ duration: 0.8 }}
+              className="absolute inset-0 bg-gradient-radial from-[var(--color-pac-yellow)]/40 to-transparent"
+            />
+            {[...Array(20)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ x: 0, y: 0, scale: 0, rotate: 0 }}
+                animate={{ 
+                  x: (Math.random() - 0.5) * 1000, 
+                  y: (Math.random() - 0.5) * 1000 - 200,
+                  scale: [0, 1.5, 0.5],
+                  rotate: Math.random() * 360,
+                  opacity: [0, 1, 0]
+                }}
+                transition={{ 
+                  duration: 1.2, 
+                  ease: "easeOut",
+                  delay: Math.random() * 0.2
+                }}
+                className="absolute w-8 h-8 md:w-12 md:h-12 bg-[var(--color-pac-yellow)] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(250,204,21,0.6)]"
+              >
+                <div className="w-full h-full rounded-full border-4 border-yellow-600/30 flex items-center justify-center text-black font-black text-lg">₹</div>
+              </motion.div>
+            ))}
+            <motion.h2 
+              initial={{ scale: 0.5, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 1.5, opacity: 0 }}
+              className="text-6xl md:text-9xl font-black text-white italic tracking-tighter drop-shadow-[0_0_30px_rgba(250,204,21,0.8)] z-10"
+            >
+              JACKPOT!
+            </motion.h2>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
